@@ -1,5 +1,30 @@
 # Frontend
 
-Next.js app for the Project Submission and Review Dashboard.
+Next.js App Router frontend for the Project Submission and Review Dashboard.
 
-See the root [README.md](../README.md) for Docker and local setup instructions.
+## Local setup
+
+```bash
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+Open http://localhost:3000.
+
+`NEXT_PUBLIC_API_URL` must point at the Express API (default `http://localhost:4000`).
+
+## Scripts
+
+- `npm run dev` — development server
+- `npm run build` — production build
+- `npm run start` — start production server
+- `npm run lint` — ESLint
+
+## Authentication notes
+
+- Signup and login call `POST /api/auth/signup` and `POST /api/auth/login`.
+- The API returns a Bearer JWT. The frontend stores it in `localStorage` and sends `Authorization: Bearer <token>`.
+- HttpOnly cookie auth is not used because the backend does not set session cookies.
+- Logout clears local auth state only; there is no backend logout endpoint.
+- Client route guards are UX only. Backend JWT + RBAC remain authoritative.
