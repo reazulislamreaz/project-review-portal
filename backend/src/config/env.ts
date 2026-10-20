@@ -4,6 +4,9 @@ dotenv.config();
 
 const DEFAULT_PORT = 4000;
 const DEFAULT_JWT_EXPIRES_IN = "24h";
+/** B0 D2: 5 submission attempts per 15 minutes per authenticated student. */
+const DEFAULT_SUBMISSION_RATE_LIMIT_MAX = 5;
+const DEFAULT_SUBMISSION_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 
 function parsePort(value: string | undefined): number {
   if (value === undefined || value.trim() === "") {
@@ -68,6 +71,24 @@ function parseJwtExpiresIn(value: string | undefined): string {
   return value.trim();
 }
 
+function parsePositiveInt(
+  name: string,
+  value: string | undefined,
+  fallback: number,
+): number {
+  if (value === undefined || value.trim() === "") {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new Error(`Invalid ${name} value: "${value}". Expected a positive integer.`);
+  }
+
+  return parsed;
+}
+
 /**
  * DATABASE_URL is optional at process boot so modules can load without a live database.
  * Prisma reads it when database operations run.
@@ -84,4 +105,14 @@ export const env = {
   mentorSeedName: process.env.MENTOR_SEED_NAME,
   mentorSeedEmail: process.env.MENTOR_SEED_EMAIL,
   mentorSeedPassword: process.env.MENTOR_SEED_PASSWORD,
+  submissionRateLimitMax: parsePositiveInt(
+    "SUBMISSION_RATE_LIMIT_MAX",
+    process.env.SUBMISSION_RATE_LIMIT_MAX,
+    DEFAULT_SUBMISSION_RATE_LIMIT_MAX,
+  ),
+  submissionRateLimitWindowMs: parsePositiveInt(
+    "SUBMISSION_RATE_LIMIT_WINDOW_MS",
+    process.env.SUBMISSION_RATE_LIMIT_WINDOW_MS,
+    DEFAULT_SUBMISSION_RATE_LIMIT_WINDOW_MS,
+  ),
 } as const;

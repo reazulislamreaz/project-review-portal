@@ -1,5 +1,6 @@
 import { Router } from "express";
 import authRoutes from "./authRoutes";
+import submissionRoutes from "./submissionRoutes";
 
 const router = Router();
 
@@ -11,5 +12,6 @@ router.get("/health", (_req, res) => {
 });
 
 router.use("/auth", authRoutes);
+router.use("/submissions", submissionRoutes);
 
 export default router;

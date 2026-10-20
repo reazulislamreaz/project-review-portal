@@ -1,14 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import { getAuthenticatedUser, loginUser, signupStudent } from "../services/authService";
 import { AppError } from "../utils/errors";
+import { formatZodError } from "../utils/zod";
 import { loginSchema, signupSchema } from "../validators/auth";
-
-function formatZodError(error: { issues: { path: PropertyKey[]; message: string }[] }) {
-  return error.issues.map((issue) => ({
-    field: issue.path.map(String).join(".") || "body",
-    message: issue.message,
-  }));
-}
 
 export async function signup(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
