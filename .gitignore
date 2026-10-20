@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+frontend/.env.local
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Logs and caches
+*.log
+npm-debug.log*
+.npm
+.eslintcache
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Docker / local data
+docker-data/
+
+# AI agent instruction files (keep locally; do not commit)
+AGENTS.md
+Agents.md
+agents.md
+**/AGENTS.md
+**/Agents.md
+**/agents.md
+.cursor/
+.claude/
+.aider*
+.continue/
+.codex/
+.github/copilot-instructions.md
+**/CLAUDE.md
+**/claude.md
+**/GEMINI.md
+**/gemini.md
+**/CURSOR.md
+**/cursor.md
+
+# PDF files (keep locally; do not commit)
+Web Instructor - Hiring Task.pdf
+*.pdf
+**/*.pdf
