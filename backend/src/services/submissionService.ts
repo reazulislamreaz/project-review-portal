@@ -1,7 +1,18 @@
-import { Prisma, type Submission } from "@prisma/client";
+import { Prisma, type Submission, type SubmissionStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../utils/errors";
 import type { CreateSubmissionInput } from "../validators/submission";
+import type {
+  ListSubmissionsQuery,
+  UpdateSubmissionStatusInput,
+} from "../validators/review";
+
+export type SafeStudentSummary = {
+  id: string;
+  name: string;
+  email: string;
+  role: "STUDENT" | "MENTOR";
+};
 
 export type SafeSubmission = {
   id: string;
@@ -15,6 +26,27 @@ export type SafeSubmission = {
   updatedAt: Date;
 };
 
+export type MentorSubmissionView = SafeSubmission & {
+  student: SafeStudentSummary;
+};
+
+export type PaginatedSubmissions = {
+  items: MentorSubmissionView[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
+
+const studentSelect = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+} as const;
+
 function toSafeSubmission(submission: Submission): SafeSubmission {
   return {
     id: submission.id,
@@ -26,6 +58,15 @@ function toSafeSubmission(submission: Submission): SafeSubmission {
     studentId: submission.studentId,
     createdAt: submission.createdAt,
     updatedAt: submission.updatedAt,
+  };
+}
+
+function toMentorSubmissionView(
+  submission: Submission & { student: SafeStudentSummary },
+): MentorSubmissionView {
+  return {
+    ...toSafeSubmission(submission),
+    student: submission.student,
   };
 }
 
@@ -75,4 +116,87 @@ export async function createSubmissionForStudent(
 
     throw error;
   }
+}
+
+/** Mentor listing with optional status filter and server-side pagination. */
+export async function listSubmissionsForMentor(
+  query: ListSubmissionsQuery,
+): Promise<PaginatedSubmissions> {
+  const where: Prisma.SubmissionWhereInput = query.status
+    ? { status: query.status }
+    : {};
+
+  const skip = (query.page - 1) * query.limit;
+
+  const [total, rows] = await prisma.$transaction([
+    prisma.submission.count({ where }),
+    prisma.submission.findMany({
+      where,
+      skip,
+      take: query.limit,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      include: {
+        student: { select: studentSelect },
+      },
+    }),
+  ]);
+
+  const totalPages = total === 0 ? 0 : Math.ceil(total / query.limit);
+
+  return {
+    items: rows.map(toMentorSubmissionView),
+    pagination: {
+      page: query.page,
+      limit: query.limit,
+      total,
+      totalPages,
+    },
+  };
+}
+
+/**
+ * Approve or reject a pending submission.
+ * Concurrent-safe: update only succeeds when current status is still PENDING.
+ */
+export async function updateSubmissionStatusForMentor(
+  submissionId: string,
+  input: UpdateSubmissionStatusInput,
+): Promise<MentorSubmissionView> {
+  const nextStatus: SubmissionStatus = input.status;
+
+  const updated = await prisma.submission.updateMany({
+    where: {
+      id: submissionId,
+      status: "PENDING",
+    },
+    data: {
+      status: nextStatus,
+    },
+  });
+
+  if (updated.count === 1) {
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      include: {
+        student: { select: studentSelect },
+      },
+    });
+
+    if (!submission) {
+      throw new AppError("Submission not found", 404);
+    }
+
+    return toMentorSubmissionView(submission);
+  }
+
+  const existing = await prisma.submission.findUnique({
+    where: { id: submissionId },
+    select: { id: true, status: true },
+  });
+
+  if (!existing) {
+    throw new AppError("Submission not found", 404);
+  }
+
+  throw new AppError("Submission has already been reviewed", 409);
 }

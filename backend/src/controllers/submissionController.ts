@@ -1,7 +1,16 @@
 import type { NextFunction, Request, Response } from "express";
-import { createSubmissionForStudent } from "../services/submissionService";
+import {
+  createSubmissionForStudent,
+  listSubmissionsForMentor,
+  updateSubmissionStatusForMentor,
+} from "../services/submissionService";
 import { AppError } from "../utils/errors";
 import { formatZodError } from "../utils/zod";
+import {
+  listSubmissionsQuerySchema,
+  submissionIdParamSchema,
+  updateSubmissionStatusSchema,
+} from "../validators/review";
 import { createSubmissionSchema } from "../validators/submission";
 
 export async function createSubmission(
@@ -25,6 +34,59 @@ export async function createSubmission(
     res.status(201).json({
       success: true,
       message: "Submission created successfully",
+      data: { submission },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function listSubmissions(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const parsed = listSubmissionsQuerySchema.safeParse(req.query);
+
+    if (!parsed.success) {
+      throw new AppError("Validation failed", 400, formatZodError(parsed.error));
+    }
+
+    const result = await listSubmissionsForMentor(parsed.data);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateSubmissionStatus(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const params = submissionIdParamSchema.safeParse(req.params);
+
+    if (!params.success) {
+      throw new AppError("Validation failed", 400, formatZodError(params.error));
+    }
+
+    const body = updateSubmissionStatusSchema.safeParse(req.body);
+
+    if (!body.success) {
+      throw new AppError("Validation failed", 400, formatZodError(body.error));
+    }
+
+    const submission = await updateSubmissionStatusForMentor(params.data.id, body.data);
+
+    res.status(200).json({
+      success: true,
+      message: `Submission ${body.data.status.toLowerCase()} successfully`,
       data: { submission },
     });
   } catch (error) {
