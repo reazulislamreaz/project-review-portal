@@ -1,7 +1,6 @@
 "use client";
 
 import { Alert } from "@/components/feedback/alert";
-import { Card, CardContent } from "@/components/ui/card";
 import type { DashboardStats } from "@/lib/api/types";
 
 type StatsPanelProps = {
@@ -11,10 +10,10 @@ type StatsPanelProps = {
 };
 
 const items: { key: keyof DashboardStats; label: string }[] = [
-  { key: "totalPending", label: "Total pending" },
-  { key: "totalApproved", label: "Total approved" },
-  { key: "totalRejected", label: "Total rejected" },
-  { key: "totalSubmissions", label: "Total submissions" },
+  { key: "totalPending", label: "Pending" },
+  { key: "totalApproved", label: "Approved" },
+  { key: "totalRejected", label: "Rejected" },
+  { key: "totalSubmissions", label: "Total" },
 ];
 
 export function StatsPanel({ stats, loading, error }: StatsPanelProps) {
@@ -23,18 +22,14 @@ export function StatsPanel({ stats, loading, error }: StatsPanelProps) {
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border lg:grid-cols-4">
       {items.map((item) => (
-        <Card key={item.key}>
-          <CardContent className="p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              {item.label}
-            </p>
-            <p className="mt-2 text-2xl font-semibold tabular-nums text-slate-900">
-              {loading || !stats ? "—" : stats[item.key]}
-            </p>
-          </CardContent>
-        </Card>
+        <div key={item.key} className="bg-surface px-4 py-4 sm:px-5">
+          <p className="text-xs font-medium text-muted-foreground">{item.label}</p>
+          <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
+            {loading || !stats ? "—" : stats[item.key]}
+          </p>
+        </div>
       ))}
     </div>
   );

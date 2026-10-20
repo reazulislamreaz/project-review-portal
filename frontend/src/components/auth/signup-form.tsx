@@ -72,7 +72,7 @@ export function SignupForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Create student account</CardTitle>
+        <CardTitle as="h1">Create student account</CardTitle>
         <CardDescription>
           Sign up to submit projects. Mentors are provisioned separately by an administrator.
         </CardDescription>
@@ -133,9 +133,12 @@ export function SignupForm() {
           </Button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-slate-600">
+        <p className="mt-5 text-center text-sm text-subtle">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-slate-900 underline-offset-4 hover:underline">
+          <Link
+            href="/login"
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
             Log in
           </Link>
         </p>

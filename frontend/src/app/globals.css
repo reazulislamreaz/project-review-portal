@@ -1,13 +1,43 @@
 @import "tailwindcss";
 
+/*
+  Brand palette (slate only):
+  primary   = slate-900
+  secondary = slate-50 / white
+  Semantic states reuse slate shades and opacity — no extra accent hues.
+*/
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
+  --surface: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --subtle: #475569;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --primary: #0f172a;
+  --primary-foreground: #ffffff;
+  --primary-hover: #1e293b;
+  --ring: #94a3b8;
+  --radius: 0.5rem;
+  --radius-lg: 0.625rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-ring: var(--ring);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius-lg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -16,8 +46,30 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-a {
+a[href] {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Native dialog reset so ConfirmDialog can control layout */
+dialog {
+  border: none;
+  padding: 0;
+  max-width: none;
+  max-height: none;
+  background: transparent;
   color: inherit;
+}
+
+dialog::backdrop {
+  background: rgb(15 23 42 / 0.4);
 }

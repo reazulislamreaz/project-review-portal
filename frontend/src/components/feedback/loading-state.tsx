@@ -9,7 +9,7 @@ export function LoadingState({ label = "Loading..." }: LoadingStateProps) {
       role="status"
       aria-live="polite"
     >
-      <p className="text-sm text-slate-600">{label}</p>
+      <p className="text-sm text-subtle">{label}</p>
     </div>
   );
 }

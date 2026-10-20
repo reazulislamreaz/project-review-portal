@@ -17,33 +17,33 @@ export function SubmissionSuccess({ submission }: SubmissionSuccessProps) {
           Your project was submitted successfully. Mentors will review it soon.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5">
         <Alert variant="success" title={`Status: ${submission.status}`}>
           {submission.status === "PENDING"
             ? "Your submission is pending mentor review."
             : `Current status is ${submission.status}.`}
         </Alert>
 
-        <dl className="space-y-3 text-sm">
-          <div>
-            <dt className="font-medium text-slate-800">Project name</dt>
-            <dd className="mt-1 text-slate-600">{submission.projectName}</dd>
+        <dl className="divide-y divide-border border-t border-border text-sm">
+          <div className="grid gap-1 py-3 sm:grid-cols-[8rem_1fr] sm:gap-4">
+            <dt className="font-medium text-foreground">Project name</dt>
+            <dd className="text-subtle">{submission.projectName}</dd>
           </div>
-          <div>
-            <dt className="font-medium text-slate-800">Repository</dt>
-            <dd className="mt-1 break-all text-slate-600">{submission.repoUrl}</dd>
+          <div className="grid gap-1 py-3 sm:grid-cols-[8rem_1fr] sm:gap-4">
+            <dt className="font-medium text-foreground">Repository</dt>
+            <dd className="break-all text-subtle">{submission.repoUrl}</dd>
           </div>
-          <div>
-            <dt className="font-medium text-slate-800">Live link</dt>
-            <dd className="mt-1 break-all text-slate-600">{submission.liveUrl}</dd>
+          <div className="grid gap-1 py-3 sm:grid-cols-[8rem_1fr] sm:gap-4">
+            <dt className="font-medium text-foreground">Live link</dt>
+            <dd className="break-all text-subtle">{submission.liveUrl}</dd>
           </div>
-          <div>
-            <dt className="font-medium text-slate-800">Description</dt>
-            <dd className="mt-1 whitespace-pre-wrap text-slate-600">{submission.description}</dd>
+          <div className="grid gap-1 py-3 sm:grid-cols-[8rem_1fr] sm:gap-4">
+            <dt className="font-medium text-foreground">Description</dt>
+            <dd className="whitespace-pre-wrap text-subtle">{submission.description}</dd>
           </div>
         </dl>
 
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-subtle">
           Each student may submit only once. You can sign out anytime from the header.
         </p>
       </CardContent>

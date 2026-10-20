@@ -24,24 +24,31 @@ export function AppShell({ title, children, wide = false }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-surface">
         <div
           className={cn(
-            "mx-auto flex items-center justify-between gap-4 px-4 py-4 sm:px-6",
+            "mx-auto flex items-center justify-between gap-4 px-4 py-3.5 sm:px-6",
             widthClass,
           )}
         >
-          <div>
-            <Link href="/" className="text-sm font-semibold text-slate-900">
+          <div className="min-w-0">
+            <Link
+              href="/"
+              className="text-sm font-semibold text-foreground hover:text-primary-hover"
+            >
               Project Submission Dashboard
             </Link>
-            <p className="mt-0.5 text-xs text-slate-500">{title}</p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{title}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             {user ? (
-              <p className="hidden text-sm text-slate-600 sm:block">
-                {user.name} · {user.role === "MENTOR" ? "Mentor" : "Student"}
+              <p className="hidden text-sm text-subtle sm:block">
+                {user.name}
+                <span className="text-muted-foreground">
+                  {" "}
+                  · {user.role === "MENTOR" ? "Mentor" : "Student"}
+                </span>
               </p>
             ) : null}
             <Button type="button" variant="outline" size="sm" onClick={handleLogout}>
@@ -50,7 +57,7 @@ export function AppShell({ title, children, wide = false }: AppShellProps) {
           </div>
         </div>
       </header>
-      <main className={cn("mx-auto px-4 py-8 sm:px-6", widthClass)}>{children}</main>
+      <main className={cn("mx-auto px-4 py-8 sm:px-6 sm:py-10", widthClass)}>{children}</main>
     </div>
   );
 }

@@ -3,19 +3,29 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  [
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap",
+    "rounded-md text-sm font-medium leading-none",
+    "transition-colors duration-150",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    "disabled:pointer-events-none disabled:opacity-50",
+    "cursor-pointer disabled:cursor-not-allowed",
+  ].join(" "),
   {
     variants: {
       variant: {
-        default: "bg-slate-900 text-white hover:bg-slate-800",
-        secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200",
-        outline: "border border-slate-300 bg-white text-slate-900 hover:bg-slate-50",
-        ghost: "text-slate-700 hover:bg-slate-100",
+        default:
+          "bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary",
+        secondary:
+          "bg-muted text-foreground hover:bg-border active:bg-border-strong",
+        outline:
+          "border border-border-strong bg-surface text-foreground hover:bg-muted active:bg-border",
+        ghost: "text-subtle hover:bg-muted hover:text-foreground active:bg-border",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-6",
+        default: "h-10 px-4",
+        sm: "h-9 px-3",
+        lg: "h-11 px-5",
       },
     },
     defaultVariants: {

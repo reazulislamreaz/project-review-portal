@@ -4,6 +4,7 @@ import { useState } from "react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { Alert } from "@/components/feedback/alert";
 import { AppShell } from "@/components/layout/app-shell";
+import { PageHeader } from "@/components/layout/page-header";
 import { SubmissionForm } from "@/components/student/submission-form";
 import { SubmissionSuccess } from "@/components/student/submission-success";
 import type { SafeSubmission } from "@/lib/api/types";
@@ -15,26 +16,21 @@ function StudentHomeContent() {
 
   return (
     <AppShell title="Student portal">
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-            Welcome{user ? `, ${user.name}` : ""}
-          </h2>
-          <p className="text-sm text-slate-600">
-            Submit your project details for mentor review. Only one submission is allowed
-            per student account.
-          </p>
-        </div>
+      <div className="space-y-8">
+        <PageHeader
+          title={user ? `Welcome, ${user.name}` : "Welcome"}
+          description="Submit your project details for mentor review. Only one submission is allowed per student account."
+        />
 
         {submission ? (
-          <>
+          <div className="space-y-4">
             <SubmissionSuccess submission={submission} />
             <Alert variant="info">
               Reloading this page shows the form again because there is no student “own
-              submission” API yet. A second submit still returns a conflict from the
-              backend (one submission per student).
+              submission” API yet. A second submit still returns a conflict from the backend
+              (one submission per student).
             </Alert>
-          </>
+          </div>
         ) : (
           <SubmissionForm onSuccess={setSubmission} />
         )}

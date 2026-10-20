@@ -28,16 +28,13 @@ export default function HomePage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center gap-8 px-4 py-16 sm:px-6">
-      <div className="space-y-3">
-        <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
+      <div className="space-y-4">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           Project Submission Dashboard
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-          Submit projects. Review with confidence.
         </h1>
-        <p className="text-base text-slate-600">
-          Students create an account to submit work. Mentors sign in with their seeded
-          administrator credentials.
+        <p className="text-base leading-relaxed text-subtle">
+          Students submit project work for review. Mentors approve or reject submissions from
+          a single dashboard.
         </p>
       </div>
 
@@ -50,9 +47,12 @@ export default function HomePage() {
         </Button>
       </div>
 
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-muted-foreground">
         Already registered?{" "}
-        <Link href="/login" className="font-medium text-slate-900 underline-offset-4 hover:underline">
+        <Link
+          href="/login"
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+        >
           Go to login
         </Link>
       </p>

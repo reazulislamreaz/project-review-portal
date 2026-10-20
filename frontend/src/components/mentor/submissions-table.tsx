@@ -24,7 +24,7 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="break-all text-slate-900 underline-offset-2 hover:underline"
+      className="break-all text-foreground underline-offset-2 hover:underline"
     >
       {children}
     </a>
@@ -48,7 +48,7 @@ export function SubmissionsTable({
 
   if (loading && items.length === 0) {
     return (
-      <p className="text-sm text-slate-600" role="status" aria-live="polite">
+      <p className="text-sm text-subtle" role="status" aria-live="polite">
         Loading submissions...
       </p>
     );
@@ -65,48 +65,50 @@ export function SubmissionsTable({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-            <tr>
-              <th scope="col" className="px-4 py-3 font-medium">
+      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+        <table className="min-w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-border">
+              <th scope="col" className="px-4 py-3 text-xs font-medium text-muted-foreground">
                 Project
               </th>
-              <th scope="col" className="px-4 py-3 font-medium">
+              <th scope="col" className="px-4 py-3 text-xs font-medium text-muted-foreground">
                 Student
               </th>
-              <th scope="col" className="px-4 py-3 font-medium">
+              <th scope="col" className="px-4 py-3 text-xs font-medium text-muted-foreground">
                 Links
               </th>
-              <th scope="col" className="px-4 py-3 font-medium">
+              <th scope="col" className="px-4 py-3 text-xs font-medium text-muted-foreground">
                 Description
               </th>
-              <th scope="col" className="px-4 py-3 font-medium">
+              <th scope="col" className="px-4 py-3 text-xs font-medium text-muted-foreground">
                 Status
               </th>
-              <th scope="col" className="px-4 py-3 font-medium">
+              <th scope="col" className="px-4 py-3 text-xs font-medium text-muted-foreground">
                 Submitted
               </th>
-              <th scope="col" className="px-4 py-3 font-medium">
+              <th scope="col" className="px-4 py-3 text-xs font-medium text-muted-foreground">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody>
             {items.map((submission) => {
               const busy = reviewingId === submission.id;
               const canReview = submission.status === "PENDING";
 
               return (
-                <tr key={submission.id} className="align-top">
-                  <td className="px-4 py-3 font-medium text-slate-900">
+                <tr key={submission.id} className="align-top border-b border-border last:border-b-0">
+                  <td className="px-4 py-3.5 font-medium text-foreground">
                     {submission.projectName}
                   </td>
-                  <td className="px-4 py-3 text-slate-700">
-                    <div>{submission.student.name}</div>
-                    <div className="break-all text-slate-500">{submission.student.email}</div>
+                  <td className="px-4 py-3.5 text-subtle">
+                    <div className="text-foreground">{submission.student.name}</div>
+                    <div className="mt-0.5 break-all text-muted-foreground">
+                      {submission.student.email}
+                    </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3.5">
                     <div className="space-y-1">
                       <div>
                         <ExternalLink href={submission.repoUrl}>Repository</ExternalLink>
@@ -116,18 +118,18 @@ export function SubmissionsTable({
                       </div>
                     </div>
                   </td>
-                  <td className="max-w-xs px-4 py-3 text-slate-600">
+                  <td className="max-w-xs px-4 py-3.5 text-subtle">
                     <p className="whitespace-pre-wrap break-words">{submission.description}</p>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-800">
+                  <td className="px-4 py-3.5">
+                    <span className="inline-flex rounded-md bg-muted px-2 py-1 text-xs font-medium text-foreground">
                       {statusLabel(submission.status)}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                  <td className="whitespace-nowrap px-4 py-3.5 text-subtle">
                     {formatSubmissionDate(submission.createdAt)}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3.5">
                     {canReview ? (
                       <div className="flex flex-col gap-2 sm:flex-row">
                         <Button
@@ -149,7 +151,7 @@ export function SubmissionsTable({
                         </Button>
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-500">Reviewed</span>
+                      <span className="text-xs text-muted-foreground">Reviewed</span>
                     )}
                   </td>
                 </tr>
@@ -161,7 +163,7 @@ export function SubmissionsTable({
 
       {pagination ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-slate-600" aria-live="polite">
+          <p className="text-sm text-subtle" aria-live="polite">
             Page {pagination.page} of {Math.max(pagination.totalPages, 1)} · {pagination.total}{" "}
             total
             {loading ? " · Refreshing..." : ""}

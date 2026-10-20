@@ -71,7 +71,7 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Log in</CardTitle>
+        <CardTitle as="h1">Log in</CardTitle>
         <CardDescription>Use your student or mentor credentials to continue.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -115,9 +115,12 @@ export function LoginForm() {
           </Button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-slate-600">
+        <p className="mt-5 text-center text-sm text-subtle">
           Need a student account?{" "}
-          <Link href="/signup" className="font-medium text-slate-900 underline-offset-4 hover:underline">
+          <Link
+            href="/signup"
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
             Sign up
           </Link>
         </p>

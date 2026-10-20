@@ -4,7 +4,7 @@ import { LoginForm } from "@/components/auth/login-form";
 export default function LoginPage() {
   return (
     <GuestOnly>
-      <main className="flex min-h-screen items-center justify-center px-4 py-12">
+      <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12 sm:px-6">
         <LoginForm />
       </main>
     </GuestOnly>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert } from "@/components/feedback/alert";
+import { PageHeader } from "@/components/layout/page-header";
 import { StatsPanel } from "@/components/mentor/stats-panel";
 import { StatusFilterControl } from "@/components/mentor/status-filter";
 import { SubmissionsTable } from "@/components/mentor/submissions-table";
@@ -274,20 +275,15 @@ export function MentorDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Review dashboard
-        </h2>
-        <p className="text-sm text-slate-600">
-          Filter and review student project submissions. Statistics come from the full
-          database, not only the current page.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Review dashboard"
+        description="Filter and review student project submissions. Statistics reflect the full database, not only the current page."
+      />
 
       <StatsPanel stats={stats} loading={statsLoading} error={statsError} />
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         <StatusFilterControl
           value={filter}
           onChange={handleFilterChange}
