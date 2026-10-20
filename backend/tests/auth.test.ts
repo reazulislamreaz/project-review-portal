@@ -120,13 +120,48 @@ describe("B3 authentication", () => {
       .set("Authorization", "Bearer not-a-jwt");
     expect(malformed.status).toBe(401);
 
+    const wrongSecret = jwt.sign({ userId, role: "STUDENT" }, "different-secret-not-used-by-app!!", {
+      algorithm: "HS256",
+      expiresIn: "1h",
+    });
+    const badSignature = await request(app)
+      .get("/api/auth/me")
+      .set("Authorization", `Bearer ${wrongSecret}`);
+    expect(badSignature.status).toBe(401);
+
+    const emptyUserId = jwt.sign({ userId: "", role: "STUDENT" }, env.jwtSecret, {
+      algorithm: "HS256",
+      expiresIn: "1h",
+    });
+    const emptyClaim = await request(app)
+      .get("/api/auth/me")
+      .set("Authorization", `Bearer ${emptyUserId}`);
+    expect(emptyClaim.status).toBe(401);
+
+    const lowercaseBearer = await request(app)
+      .get("/api/auth/me")
+      .set("Authorization", `bearer ${signup.body.data.token}`);
+    expect(lowercaseBearer.status).toBe(200);
+
     const expiredToken = jwt.sign({ userId, role: "STUDENT" }, env.jwtSecret, {
+      algorithm: "HS256",
       expiresIn: -10,
     });
     const expired = await request(app)
       .get("/api/auth/me")
       .set("Authorization", `Bearer ${expiredToken}`);
     expect(expired.status).toBe(401);
+  });
+
+  it("guards test database isolation configuration", async () => {
+    const { assertSafeTestDatabaseUrl } = await import("./dbGuard");
+
+    expect(() => assertSafeTestDatabaseUrl(process.env.DATABASE_URL)).not.toThrow();
+    expect(() =>
+      assertSafeTestDatabaseUrl(
+        "postgresql://postgres:postgres@localhost:5432/project_submission?schema=public",
+      ),
+    ).toThrow(/_test/);
   });
 
   it("returns the authenticated user's safe profile from /api/auth/me", async () => {

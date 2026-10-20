@@ -7,13 +7,13 @@ function extractBearerToken(header: string | undefined): string {
     throw new AppError("Authentication required", 401);
   }
 
-  const [scheme, token] = header.split(" ");
+  const match = /^(Bearer)\s+(\S+)$/i.exec(header.trim());
 
-  if (scheme !== "Bearer" || !token) {
+  if (!match) {
     throw new AppError("Authentication required", 401);
   }
 
-  return token;
+  return match[2];
 }
 
 export function authenticate(req: Request, _res: Response, next: NextFunction): void {

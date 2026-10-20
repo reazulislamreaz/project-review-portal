@@ -39,11 +39,22 @@ function requireNonEmpty(name: string, value: string | undefined): string {
   return value;
 }
 
+const PLACEHOLDER_JWT_SECRET_PATTERN =
+  /change-me|replace-with|your-secret|example-secret|\bTODO\b/i;
+
 function parseJwtSecret(value: string | undefined, nodeEnv: string): string {
   const secret = requireNonEmpty("JWT_SECRET", value);
 
-  if (nodeEnv === "production" && secret.length < 32) {
-    throw new Error("JWT_SECRET must be at least 32 characters in production.");
+  if (nodeEnv === "production") {
+    if (secret.length < 32) {
+      throw new Error("JWT_SECRET must be at least 32 characters in production.");
+    }
+
+    if (PLACEHOLDER_JWT_SECRET_PATTERN.test(secret)) {
+      throw new Error(
+        "JWT_SECRET appears to be a placeholder value and is not allowed in production.",
+      );
+    }
   }
 
   return secret;

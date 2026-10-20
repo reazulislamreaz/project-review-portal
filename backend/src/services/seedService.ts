@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@prisma/client";
 import { hashPassword } from "../lib/password";
 import { normalizeEmail } from "../utils/email";
 
@@ -47,14 +47,31 @@ export async function seedMentorAccount(
 
   const passwordHash = await hashPassword(password);
 
-  await prisma.user.create({
-    data: {
-      name,
-      email,
-      passwordHash,
-      role: "MENTOR",
-    },
-  });
+  try {
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        passwordHash,
+        role: "MENTOR",
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      const raced = await prisma.user.findUnique({ where: { email } });
+
+      if (raced?.role === "MENTOR") {
+        return { status: "unchanged", email };
+      }
+
+      throw new Error(
+        `Seed aborted: email "${email}" already belongs to an incompatible account. ` +
+          "Refusing to change role or password.",
+      );
+    }
+
+    throw error;
+  }
 
   return { status: "created", email };
 }

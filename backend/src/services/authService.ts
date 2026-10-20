@@ -61,11 +61,20 @@ export async function signupStudent(input: SignupInput): Promise<AuthResult> {
   }
 }
 
+/** Precomputed bcrypt hash used only to keep login timing similar when no user exists. */
+const LOGIN_DUMMY_PASSWORD_HASH =
+  "$2b$12$CDCrDH3s6BsNPc1uqTDXruqocbHqO1A1TRNeVw4LDvGyanb7RWeX2";
+
 export async function loginUser(input: LoginInput): Promise<AuthResult> {
   const email = normalizeEmail(input.email);
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
+    try {
+      await verifyPassword(input.password, LOGIN_DUMMY_PASSWORD_HASH);
+    } catch {
+      // Ignore dummy-hash comparison failures; response must stay generic.
+    }
     throw new AppError("Invalid email or password", 401);
   }
 
