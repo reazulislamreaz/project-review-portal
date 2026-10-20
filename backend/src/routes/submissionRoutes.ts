@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createSubmission,
+  getMySubmission,
   listSubmissions,
   updateSubmissionStatus,
 } from "../controllers/submissionController";
@@ -17,6 +18,9 @@ router.post(
   submissionRateLimit,
   createSubmission,
 );
+
+// Student-owned submission — register before any /:id routes.
+router.get("/me", authenticate, authorize("STUDENT"), getMySubmission);
 
 router.get("/", authenticate, authorize("MENTOR"), listSubmissions);
 

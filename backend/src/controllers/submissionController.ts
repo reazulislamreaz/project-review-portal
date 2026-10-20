@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import {
   createSubmissionForStudent,
+  getSubmissionForStudent,
   listSubmissionsForMentor,
   updateSubmissionStatusForMentor,
 } from "../services/submissionService";
@@ -34,6 +35,27 @@ export async function createSubmission(
     res.status(201).json({
       success: true,
       message: "Submission created successfully",
+      data: { submission },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getMySubmission(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    if (!req.auth) {
+      throw new AppError("Authentication required", 401);
+    }
+
+    const submission = await getSubmissionForStudent(req.auth.id);
+
+    res.status(200).json({
+      success: true,
       data: { submission },
     });
   } catch (error) {

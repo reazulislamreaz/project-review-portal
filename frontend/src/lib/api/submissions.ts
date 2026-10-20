@@ -33,6 +33,16 @@ export async function createSubmission(
   return data.submission;
 }
 
+/** Authenticated student's own submission, or null when none exists. */
+export async function getMySubmission(token: string): Promise<SafeSubmission | null> {
+  const data = await apiRequest<{ submission: SafeSubmission | null }>("/api/submissions/me", {
+    method: "GET",
+    token,
+  });
+
+  return data.submission;
+}
+
 export async function listSubmissionsForMentor(
   token: string,
   params: ListSubmissionsParams = {},

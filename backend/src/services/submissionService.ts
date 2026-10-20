@@ -85,6 +85,20 @@ function isStudentIdUniqueViolation(error: Prisma.PrismaClientKnownRequestError)
 }
 
 /**
+ * Return the authenticated student's own submission, or null when none exists.
+ * Looks up by JWT-derived studentId only — never by a client-supplied id.
+ */
+export async function getSubmissionForStudent(
+  studentId: string,
+): Promise<SafeSubmission | null> {
+  const submission = await prisma.submission.findUnique({
+    where: { studentId },
+  });
+
+  return submission ? toSafeSubmission(submission) : null;
+}
+
+/**
  * Create a project submission for the authenticated student.
  * Duplicate policy (B0 D1 / B2 unique studentId): one submission per student.
  */

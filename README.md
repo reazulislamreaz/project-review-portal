@@ -150,7 +150,7 @@ cp .env.test.example .env.test
 | `/` | Public | Landing / redirect |
 | `/signup` | Public | Student registration |
 | `/login` | Public | Student or mentor login |
-| `/student` | STUDENT | Project submission form |
+| `/student` | STUDENT | Student dashboard (submit + status) |
 | `/mentor` | MENTOR | Review dashboard |
 
 ## API overview
@@ -164,6 +164,7 @@ Base URL: `http://localhost:4000` (or `NEXT_PUBLIC_API_URL`).
 | `POST` | `/api/auth/login` | No | Returns `{ user, token }` |
 | `GET` | `/api/auth/me` | Bearer | Current user profile |
 | `POST` | `/api/submissions` | Student | Create submission |
+| `GET` | `/api/submissions/me` | Student | Own submission, or `{ submission: null }` |
 | `GET` | `/api/submissions` | Mentor | List + `page`, `limit`, optional `status` |
 | `PATCH` | `/api/submissions/:id/status` | Mentor | `{ status: APPROVED \| REJECTED }` |
 | `GET` | `/api/dashboard/stats` | Mentor | Aggregate counts |
