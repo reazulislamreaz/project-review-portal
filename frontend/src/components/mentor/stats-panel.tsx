@@ -22,11 +22,16 @@ export function StatsPanel({ stats, loading, error }: StatsPanelProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       {items.map((item) => (
-        <div key={item.key} className="bg-surface px-4 py-4 sm:px-5">
-          <p className="text-xs font-medium text-muted-foreground">{item.label}</p>
-          <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
+        <div
+          key={item.key}
+          className="rounded-lg border border-border bg-surface px-4 py-4 sm:px-5"
+        >
+          <p className="text-xs font-medium uppercase tracking-wide text-subtle">
+            {item.label}
+          </p>
+          <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
             {loading || !stats ? "—" : stats[item.key]}
           </p>
         </div>

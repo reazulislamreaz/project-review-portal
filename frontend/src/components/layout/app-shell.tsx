@@ -16,7 +16,7 @@ type AppShellProps = {
 export function AppShell({ title, children, wide = false }: AppShellProps) {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const widthClass = wide ? "max-w-6xl" : "max-w-3xl";
+  const widthClass = wide ? "max-w-7xl" : "max-w-3xl";
 
   function handleLogout() {
     logout();
