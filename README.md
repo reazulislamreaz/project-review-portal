@@ -152,7 +152,7 @@ cp .env.test.example .env.test
 | `/login` | Public | Student or mentor login |
 | `/student` | STUDENT | Student dashboard (submit + status + timeline) |
 | `/student/profile` | STUDENT | Student profile (name, email, role, member since) |
-| `/mentor` | MENTOR | Review dashboard |
+| `/mentor` | MENTOR | Review dashboard (incl. Needs review queue) |
 
 ## API overview
 

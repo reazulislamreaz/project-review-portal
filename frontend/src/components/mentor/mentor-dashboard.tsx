@@ -230,6 +230,12 @@ export function MentorDashboard() {
 
   function handleFilterChange(nextFilter: StatusFilter) {
     resetListState();
+    // Needs-review queue defaults to oldest-first; other views keep newest-first.
+    if (nextFilter === "PENDING") {
+      setSortOrder("asc");
+    } else if (filter === "PENDING") {
+      setSortOrder("desc");
+    }
     setFilter(nextFilter);
     setPage(1);
   }
@@ -363,6 +369,7 @@ export function MentorDashboard() {
             value={filter}
             onChange={handleFilterChange}
             disabled={controlsLocked}
+            pendingCount={stats?.totalPending ?? null}
           />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -387,7 +394,9 @@ export function MentorDashboard() {
             </form>
 
             <div className="space-y-2">
-              <Label htmlFor="mentor-sort">Sort by date</Label>
+              <Label htmlFor="mentor-sort">
+                {filter === "PENDING" ? "Queue order" : "Sort by date"}
+              </Label>
               <select
                 id="mentor-sort"
                 className="flex h-10 w-full rounded-md border border-border-strong bg-surface px-3 text-sm text-foreground sm:w-44"
@@ -395,8 +404,8 @@ export function MentorDashboard() {
                 disabled={controlsLocked}
                 onChange={(event) => handleSortChange(event.target.value as SortOrder)}
               >
-                <option value="desc">Newest first</option>
                 <option value="asc">Oldest first</option>
+                <option value="desc">Newest first</option>
               </select>
             </div>
           </div>
@@ -433,7 +442,9 @@ export function MentorDashboard() {
             emptyMessage={
               searchQuery
                 ? "No submissions match your search."
-                : "No submissions match this filter."
+                : filter === "PENDING"
+                  ? "No submissions need review right now."
+                  : "No submissions match this filter."
             }
             onPageChange={handlePageChange}
             onReview={handleReviewRequest}

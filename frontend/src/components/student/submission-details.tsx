@@ -3,7 +3,11 @@
 import { Alert } from "@/components/feedback/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SafeSubmission } from "@/lib/api/types";
-import { formatSubmissionDate, statusLabel } from "@/lib/mentor/format";
+import {
+  formatSubmissionDate,
+  formatWaitingDuration,
+  statusLabel,
+} from "@/lib/mentor/format";
 
 type SubmissionDetailsProps = {
   submission: SafeSubmission;
@@ -97,7 +101,14 @@ export function SubmissionDetails({ submission }: SubmissionDetailsProps) {
           </div>
           <div className="grid gap-1 py-3 sm:grid-cols-[9rem_1fr] sm:gap-4">
             <dt className="font-medium text-foreground">Submitted</dt>
-            <dd className="text-subtle">{formatSubmissionDate(submission.createdAt)}</dd>
+            <dd className="text-subtle">
+              <div>{formatSubmissionDate(submission.createdAt)}</div>
+              {submission.status === "PENDING" ? (
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  {formatWaitingDuration(submission.createdAt)}
+                </div>
+              ) : null}
+            </dd>
           </div>
           {submission.reviewedAt ? (
             <div className="grid gap-1 py-3 sm:grid-cols-[9rem_1fr] sm:gap-4">

@@ -3,7 +3,11 @@
 import type { ReactNode } from "react";
 import { Alert } from "@/components/feedback/alert";
 import { Button } from "@/components/ui/button";
-import { formatSubmissionDateCompact, statusLabel } from "@/lib/mentor/format";
+import {
+  formatSubmissionDateCompact,
+  formatWaitingDuration,
+  statusLabel,
+} from "@/lib/mentor/format";
 import type { MentorSubmissionView, PaginationMeta, ReviewStatus } from "@/lib/api/types";
 
 const COLUMN_COUNT = 7;
@@ -211,7 +215,12 @@ export function SubmissionsTable({
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 align-middle text-subtle">
-                        {formatSubmissionDateCompact(submission.createdAt)}
+                        <div>{formatSubmissionDateCompact(submission.createdAt)}</div>
+                        {canReview ? (
+                          <div className="mt-0.5 text-xs text-muted-foreground">
+                            {formatWaitingDuration(submission.createdAt)}
+                          </div>
+                        ) : null}
                       </td>
                       <td className="px-4 py-2.5 align-middle">
                         {canReview ? (
