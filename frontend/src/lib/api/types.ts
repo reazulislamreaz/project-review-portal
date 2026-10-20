@@ -12,6 +12,20 @@ export type AuthResult = {
   token: string;
 };
 
+export type SubmissionStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export type SafeSubmission = {
+  id: string;
+  projectName: string;
+  repoUrl: string;
+  liveUrl: string;
+  description: string;
+  status: SubmissionStatus;
+  studentId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type ApiSuccess<T> = {
   success: true;
   message?: string;

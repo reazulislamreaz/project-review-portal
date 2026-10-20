@@ -28,3 +28,10 @@ Open http://localhost:3000.
 - HttpOnly cookie auth is not used because the backend does not set session cookies.
 - Logout clears local auth state only; there is no backend logout endpoint.
 - Client route guards are UX only. Backend JWT + RBAC remain authoritative.
+
+## Student submissions
+
+- Students submit via `POST /api/submissions` from `/student`.
+- Client validation mirrors the backend Zod rules (required fields, HTTP/HTTPS URLs, length limits).
+- Duplicate submissions return `409`; rate limits return `429`.
+- There is no `GET /api/submissions/me`, so a reload cannot re-fetch the student's existing submission. The success view is session-local; a second POST still fails with `409`.
