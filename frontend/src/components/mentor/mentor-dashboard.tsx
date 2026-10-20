@@ -204,6 +204,9 @@ export function MentorDashboard() {
   function handleFilterChange(nextFilter: StatusFilter) {
     setActionMessage(null);
     setActionError(null);
+    setItems([]);
+    setPagination(null);
+    setListError(null);
     setFilter(nextFilter);
     setPage(1);
   }
@@ -211,6 +214,9 @@ export function MentorDashboard() {
   function handlePageChange(nextPage: number) {
     setActionMessage(null);
     setActionError(null);
+    setItems([]);
+    setPagination(null);
+    setListError(null);
     setPage(nextPage);
   }
 
@@ -300,6 +306,7 @@ export function MentorDashboard() {
           error={listError}
           reviewingId={reviewingId}
           reviewLocked={pendingReview !== null}
+          pageSize={PAGE_LIMIT}
           onPageChange={handlePageChange}
           onReview={handleReviewRequest}
         />

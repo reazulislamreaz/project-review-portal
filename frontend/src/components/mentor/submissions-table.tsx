@@ -7,6 +7,9 @@ import { formatSubmissionDateCompact, statusLabel } from "@/lib/mentor/format";
 import type { MentorSubmissionView, PaginationMeta, ReviewStatus } from "@/lib/api/types";
 
 const COLUMN_COUNT = 7;
+/** Matches a typical data row so empty/padded views keep the same height. */
+const ROW_HEIGHT_CLASS = "h-14";
+const ROW_HEIGHT_REM = 3.5;
 
 type SubmissionsTableProps = {
   items: MentorSubmissionView[];
@@ -16,6 +19,8 @@ type SubmissionsTableProps = {
   reviewingId: string | null;
   /** True while a confirmation dialog is open for a review action. */
   reviewLocked?: boolean;
+  /** API page size — used to keep body height stable across filters. */
+  pageSize?: number;
   onPageChange: (page: number) => void;
   onReview: (submissionId: string, status: ReviewStatus) => void;
 };
@@ -33,13 +38,45 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
   );
 }
 
-function TableMessageRow({ children }: { children: ReactNode }) {
+function TableMessageRow({
+  children,
+  pageSize,
+}: {
+  children: ReactNode;
+  pageSize: number;
+}) {
   return (
     <tr>
-      <td colSpan={COLUMN_COUNT} className="h-48 px-4 align-middle">
+      <td
+        colSpan={COLUMN_COUNT}
+        className="px-4 align-middle"
+        style={{ height: `${pageSize * ROW_HEIGHT_REM}rem` }}
+      >
         {children}
       </td>
     </tr>
+  );
+}
+
+function FillerRows({ count }: { count: number }) {
+  if (count <= 0) {
+    return null;
+  }
+
+  return (
+    <>
+      {Array.from({ length: count }, (_, index) => (
+        <tr
+          key={`filler-${index}`}
+          aria-hidden="true"
+          className={`${ROW_HEIGHT_CLASS} border-b border-border last:border-b-0`}
+        >
+          <td colSpan={COLUMN_COUNT} className="p-0">
+            &nbsp;
+          </td>
+        </tr>
+      ))}
+    </>
   );
 }
 
@@ -50,6 +87,7 @@ export function SubmissionsTable({
   error,
   reviewingId,
   reviewLocked = false,
+  pageSize = 10,
   onPageChange,
   onReview,
 }: SubmissionsTableProps) {
@@ -60,6 +98,7 @@ export function SubmissionsTable({
   const canPrev = page > 1;
   const canNext = totalPages > 0 && page < totalPages;
   const showRows = !error && !(loading && items.length === 0) && items.length > 0;
+  const fillerCount = showRows ? Math.max(pageSize - items.length, 0) : 0;
 
   return (
     <div className="space-y-4">
@@ -113,13 +152,13 @@ export function SubmissionsTable({
           </thead>
           <tbody>
             {error ? (
-              <TableMessageRow>
+              <TableMessageRow pageSize={pageSize}>
                 <Alert variant="error">{error}</Alert>
               </TableMessageRow>
             ) : null}
 
             {!error && loading && items.length === 0 ? (
-              <TableMessageRow>
+              <TableMessageRow pageSize={pageSize}>
                 <p className="text-sm text-subtle" role="status" aria-live="polite">
                   Loading submissions...
                 </p>
@@ -127,7 +166,7 @@ export function SubmissionsTable({
             ) : null}
 
             {!error && !loading && items.length === 0 ? (
-              <TableMessageRow>
+              <TableMessageRow pageSize={pageSize}>
                 <p className="text-sm text-subtle" role="status">
                   No submissions match this filter.
                 </p>
@@ -142,12 +181,12 @@ export function SubmissionsTable({
                   return (
                     <tr
                       key={submission.id}
-                      className="border-b border-border last:border-b-0 hover:bg-muted/30"
+                      className={`${ROW_HEIGHT_CLASS} border-b border-border last:border-b-0 hover:bg-muted/30`}
                     >
-                      <td className="max-w-[10rem] px-4 py-3 align-middle font-medium text-foreground">
+                      <td className="max-w-[10rem] px-4 py-2.5 align-middle font-medium text-foreground">
                         <span className="line-clamp-2 break-words">{submission.projectName}</span>
                       </td>
-                      <td className="max-w-[12rem] px-4 py-3 align-middle">
+                      <td className="max-w-[12rem] px-4 py-2.5 align-middle">
                         <div className="line-clamp-1 font-medium text-foreground">
                           {submission.student.name}
                         </div>
@@ -155,24 +194,24 @@ export function SubmissionsTable({
                           {submission.student.email}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 align-middle">
-                        <div className="flex flex-col gap-1 text-sm">
+                      <td className="whitespace-nowrap px-4 py-2.5 align-middle">
+                        <div className="flex flex-col gap-0.5 text-sm">
                           <ExternalLink href={submission.repoUrl}>Repository</ExternalLink>
                           <ExternalLink href={submission.liveUrl}>Live site</ExternalLink>
                         </div>
                       </td>
-                      <td className="max-w-[16rem] px-4 py-3 align-middle text-subtle">
+                      <td className="max-w-[16rem] px-4 py-2.5 align-middle text-subtle">
                         <p className="line-clamp-2 break-words">{submission.description}</p>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 align-middle">
+                      <td className="whitespace-nowrap px-4 py-2.5 align-middle">
                         <span className="inline-flex rounded-md bg-muted px-2 py-1 text-xs font-medium text-foreground">
                           {statusLabel(submission.status)}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 align-middle text-subtle">
+                      <td className="whitespace-nowrap px-4 py-2.5 align-middle text-subtle">
                         {formatSubmissionDateCompact(submission.createdAt)}
                       </td>
-                      <td className="px-4 py-3 align-middle">
+                      <td className="px-4 py-2.5 align-middle">
                         {canReview ? (
                           <div className="flex flex-nowrap items-center gap-2">
                             <Button
@@ -203,6 +242,8 @@ export function SubmissionsTable({
                   );
                 })
               : null}
+
+            <FillerRows count={fillerCount} />
           </tbody>
         </table>
       </div>
