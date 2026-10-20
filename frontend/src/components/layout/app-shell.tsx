@@ -1,9 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/lib/auth/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -17,8 +18,10 @@ export function AppShell({ title, children, wide = false }: AppShellProps) {
   const router = useRouter();
   const { user, logout } = useAuth();
   const widthClass = wide ? "max-w-7xl" : "max-w-3xl";
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
-  function handleLogout() {
+  function handleLogoutConfirm() {
+    setLogoutConfirmOpen(false);
     logout();
     router.replace("/login");
   }
@@ -51,13 +54,28 @@ export function AppShell({ title, children, wide = false }: AppShellProps) {
                 </span>
               </p>
             ) : null}
-            <Button type="button" variant="outline" size="sm" onClick={handleLogout}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setLogoutConfirmOpen(true)}
+            >
               Log out
             </Button>
           </div>
         </div>
       </header>
       <main className={cn("mx-auto px-4 py-8 sm:px-6 sm:py-10", widthClass)}>{children}</main>
+
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        title="Log out?"
+        description="Are you sure you want to log out of your account?"
+        confirmLabel="Log out"
+        cancelLabel="Cancel"
+        onConfirm={handleLogoutConfirm}
+        onCancel={() => setLogoutConfirmOpen(false)}
+      />
     </div>
   );
 }

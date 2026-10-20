@@ -282,10 +282,7 @@ export function MentorDashboard() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title="Review dashboard"
-        description="Filter and review student project submissions. Statistics reflect the full database, not only the current page."
-      />
+      <PageHeader title="Review dashboard" />
 
       <StatsPanel stats={stats} loading={statsLoading} error={statsError} />
 
