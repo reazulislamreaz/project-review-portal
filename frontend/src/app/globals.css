@@ -60,13 +60,11 @@ a[href] {
   outline-offset: 2px;
 }
 
-/* Native dialog reset so ConfirmDialog can control layout */
+/* Native dialog: center the panel; backdrop dims the page */
 dialog {
   border: none;
   padding: 0;
-  max-width: none;
-  max-height: none;
-  background: transparent;
+  margin: auto;
   color: inherit;
 }
 

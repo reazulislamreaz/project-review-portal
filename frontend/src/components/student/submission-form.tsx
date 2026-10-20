@@ -166,7 +166,7 @@ export function SubmissionForm({ onSuccess }: SubmissionFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="repoUrl">GitHub repository URL</Label>
+            <Label htmlFor="repoUrl">Repo URL</Label>
             <Input
               id="repoUrl"
               name="repoUrl"
@@ -184,7 +184,7 @@ export function SubmissionForm({ onSuccess }: SubmissionFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="liveUrl">Live project URL</Label>
+            <Label htmlFor="liveUrl">Live link</Label>
             <Input
               id="liveUrl"
               name="liveUrl"
@@ -202,7 +202,7 @@ export function SubmissionForm({ onSuccess }: SubmissionFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Project description</Label>
+            <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               name="description"

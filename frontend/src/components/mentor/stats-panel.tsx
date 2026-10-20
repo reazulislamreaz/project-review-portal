@@ -10,10 +10,10 @@ type StatsPanelProps = {
 };
 
 const items: { key: keyof DashboardStats; label: string }[] = [
-  { key: "totalPending", label: "Pending" },
-  { key: "totalApproved", label: "Approved" },
-  { key: "totalRejected", label: "Rejected" },
-  { key: "totalSubmissions", label: "Total" },
+  { key: "totalPending", label: "Total pending" },
+  { key: "totalApproved", label: "Total approved" },
+  { key: "totalRejected", label: "Total rejected" },
+  { key: "totalSubmissions", label: "Total submissions" },
 ];
 
 export function StatsPanel({ stats, loading, error }: StatsPanelProps) {

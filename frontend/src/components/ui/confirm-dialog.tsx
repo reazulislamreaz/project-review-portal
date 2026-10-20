@@ -73,14 +73,17 @@ export function ConfirmDialog({
       ref={dialogRef}
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
-      className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-surface open:block"
+      className="w-[calc(100%-2rem)] max-w-md rounded-lg border border-border bg-surface text-foreground shadow-lg"
       onClick={(event) => {
         if (event.target === dialogRef.current && !busyRef.current) {
           onCancelRef.current();
         }
       }}
     >
-      <div className="space-y-5 p-5 sm:p-6">
+      <div
+        className="space-y-5 p-5 sm:p-6"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="space-y-2">
           <h2 id={titleId} className="text-lg font-semibold tracking-tight text-foreground">
             {title}
