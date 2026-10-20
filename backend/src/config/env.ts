@@ -30,7 +30,12 @@ function parseNodeEnv(value: string | undefined): "development" | "production" |
   return env;
 }
 
+/**
+ * DATABASE_URL is optional at process boot so the HTTP server can start
+ * without a live database. Prisma reads it when database operations run.
+ */
 export const env = {
   nodeEnv: parseNodeEnv(process.env.NODE_ENV),
   port: parsePort(process.env.PORT),
+  databaseUrl: process.env.DATABASE_URL,
 } as const;

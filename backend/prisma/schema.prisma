@@ -1,0 +1,51 @@
+// Prisma schema for the Project Submission and Review Dashboard.
+// Models follow the B0 plan: User + Submission only (no Feedback model).
+// Duplicate policy (B0 D1): one submission per student → unique studentId.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  MENTOR
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(STUDENT)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  submissions Submission[]
+}
+
+model Submission {
+  id          String           @id @default(cuid())
+  projectName String
+  repoUrl     String
+  liveUrl     String
+  description String
+  status      SubmissionStatus @default(PENDING)
+  studentId   String           @unique
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
