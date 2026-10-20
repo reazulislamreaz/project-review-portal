@@ -12,6 +12,8 @@ type SubmissionsTableProps = {
   loading: boolean;
   error: string | null;
   reviewingId: string | null;
+  /** True while a confirmation dialog is open for a review action. */
+  reviewLocked?: boolean;
   onPageChange: (page: number) => void;
   onReview: (submissionId: string, status: ReviewStatus) => void;
 };
@@ -35,9 +37,11 @@ export function SubmissionsTable({
   loading,
   error,
   reviewingId,
+  reviewLocked = false,
   onPageChange,
   onReview,
 }: SubmissionsTableProps) {
+  const actionsDisabled = reviewingId !== null || reviewLocked;
   if (error) {
     return <Alert variant="error">{error}</Alert>;
   }
@@ -129,7 +133,7 @@ export function SubmissionsTable({
                         <Button
                           type="button"
                           size="sm"
-                          disabled={busy || reviewingId !== null}
+                          disabled={actionsDisabled}
                           onClick={() => onReview(submission.id, "APPROVED")}
                         >
                           {busy ? "Saving..." : "Approve"}
@@ -138,7 +142,7 @@ export function SubmissionsTable({
                           type="button"
                           size="sm"
                           variant="outline"
-                          disabled={busy || reviewingId !== null}
+                          disabled={actionsDisabled}
                           onClick={() => onReview(submission.id, "REJECTED")}
                         >
                           Reject
@@ -167,7 +171,7 @@ export function SubmissionsTable({
               type="button"
               variant="outline"
               size="sm"
-              disabled={!canPrev || loading || reviewingId !== null}
+              disabled={!canPrev || loading || actionsDisabled}
               onClick={() => onPageChange(page - 1)}
             >
               Previous
@@ -176,7 +180,7 @@ export function SubmissionsTable({
               type="button"
               variant="outline"
               size="sm"
-              disabled={!canNext || loading || reviewingId !== null}
+              disabled={!canNext || loading || actionsDisabled}
               onClick={() => onPageChange(page + 1)}
             >
               Next

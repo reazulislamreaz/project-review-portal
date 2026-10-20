@@ -6,6 +6,7 @@ import { Alert } from "@/components/feedback/alert";
 import { StatsPanel } from "@/components/mentor/stats-panel";
 import { StatusFilterControl } from "@/components/mentor/status-filter";
 import { SubmissionsTable } from "@/components/mentor/submissions-table";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { getDashboardStats } from "@/lib/api/dashboard";
 import {
   listSubmissionsForMentor,
@@ -22,6 +23,12 @@ import {
 import { useAuth } from "@/lib/auth/auth-context";
 
 const PAGE_LIMIT = 10;
+
+type PendingReview = {
+  submissionId: string;
+  projectName: string;
+  status: ReviewStatus;
+};
 
 function reviewErrorMessage(error: ApiError): string {
   switch (error.status) {
@@ -75,6 +82,7 @@ export function MentorDashboard() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
+  const [pendingReview, setPendingReview] = useState<PendingReview | null>(null);
 
   const handleAuthFailure = useCallback(() => {
     logout();
@@ -205,26 +213,41 @@ export function MentorDashboard() {
     setPage(nextPage);
   }
 
-  async function handleReview(submissionId: string, status: ReviewStatus) {
-    if (!token || reviewingId) {
+  function handleReviewRequest(submissionId: string, status: ReviewStatus) {
+    if (!token || reviewingId || pendingReview) {
       return;
     }
 
-    const actionLabel = status === "APPROVED" ? "approve" : "reject";
-    const confirmed = window.confirm(
-      `Are you sure you want to ${actionLabel} this submission? This cannot be undone.`,
-    );
+    const submission = items.find((item) => item.id === submissionId);
+    setActionMessage(null);
+    setActionError(null);
+    setPendingReview({
+      submissionId,
+      projectName: submission?.projectName ?? "this submission",
+      status,
+    });
+  }
 
-    if (!confirmed) {
+  function handleReviewCancel() {
+    if (reviewingId) {
+      return;
+    }
+    setPendingReview(null);
+  }
+
+  async function handleReviewConfirm() {
+    if (!token || !pendingReview || reviewingId) {
       return;
     }
 
+    const { submissionId, status } = pendingReview;
     setActionMessage(null);
     setActionError(null);
     setReviewingId(submissionId);
 
     try {
       const updated = await updateSubmissionStatus(submissionId, status, token);
+      setPendingReview(null);
       setActionMessage(
         status === "APPROVED"
           ? `“${updated.projectName}” was approved.`
@@ -232,6 +255,7 @@ export function MentorDashboard() {
       );
       await Promise.all([refreshList(page, filter), refreshStats()]);
     } catch (error) {
+      setPendingReview(null);
       if (error instanceof ApiError) {
         if (error.status === 401) {
           handleAuthFailure();
@@ -267,7 +291,7 @@ export function MentorDashboard() {
         <StatusFilterControl
           value={filter}
           onChange={handleFilterChange}
-          disabled={reviewingId !== null}
+          disabled={reviewingId !== null || pendingReview !== null}
         />
 
         {actionMessage ? <Alert variant="success">{actionMessage}</Alert> : null}
@@ -279,10 +303,34 @@ export function MentorDashboard() {
           loading={listLoading}
           error={listError}
           reviewingId={reviewingId}
+          reviewLocked={pendingReview !== null}
           onPageChange={handlePageChange}
-          onReview={handleReview}
+          onReview={handleReviewRequest}
         />
       </div>
+
+      <ConfirmDialog
+        open={pendingReview !== null}
+        title={
+          pendingReview?.status === "APPROVED"
+            ? "Approve submission?"
+            : "Reject submission?"
+        }
+        description={
+          pendingReview
+            ? `Are you sure you want to ${
+                pendingReview.status === "APPROVED" ? "approve" : "reject"
+              } “${pendingReview.projectName}”? This decision cannot be undone.`
+            : ""
+        }
+        confirmLabel={pendingReview?.status === "APPROVED" ? "Approve" : "Reject"}
+        cancelLabel="Cancel"
+        busy={reviewingId !== null}
+        onConfirm={() => {
+          void handleReviewConfirm();
+        }}
+        onCancel={handleReviewCancel}
+      />
     </div>
   );
 }
