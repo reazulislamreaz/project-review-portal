@@ -26,6 +26,40 @@ export type SafeSubmission = {
   updatedAt: string;
 };
 
+export type SafeStudentSummary = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+};
+
+export type MentorSubmissionView = SafeSubmission & {
+  student: SafeStudentSummary;
+};
+
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+export type PaginatedSubmissions = {
+  items: MentorSubmissionView[];
+  pagination: PaginationMeta;
+};
+
+export type DashboardStats = {
+  totalPending: number;
+  totalApproved: number;
+  totalRejected: number;
+  totalSubmissions: number;
+};
+
+export type ReviewStatus = "APPROVED" | "REJECTED";
+
+export type StatusFilter = "ALL" | SubmissionStatus;
+
 export type ApiSuccess<T> = {
   success: true;
   message?: string;

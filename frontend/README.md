@@ -35,3 +35,9 @@ Open http://localhost:3000.
 - Client validation mirrors the backend Zod rules (required fields, HTTP/HTTPS URLs, length limits).
 - Duplicate submissions return `409`; rate limits return `429`.
 - There is no `GET /api/submissions/me`, so a reload cannot re-fetch the student's existing submission. The success view is session-local; a second POST still fails with `409`.
+
+## Mentor dashboard
+
+- Mentors use `/mentor` with `GET /api/dashboard/stats`, `GET /api/submissions`, and `PATCH /api/submissions/:id/status`.
+- Filters (`All`, `Approved`, `Rejected`) and pagination are server-side query parameters.
+- Approve/Reject are shown only for `PENDING` submissions and require confirmation.
