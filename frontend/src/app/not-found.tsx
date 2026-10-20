@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export default function NotFound() {
   return (
@@ -17,12 +15,15 @@ export default function NotFound() {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Link href="/" className={cn(buttonVariants(), "sm:flex-1")}>
+        <Link
+          href="/"
+          className="inline-flex h-10 flex-1 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
           Go home
         </Link>
         <Link
           href="/login"
-          className={cn(buttonVariants({ variant: "outline" }), "sm:flex-1")}
+          className="inline-flex h-10 flex-1 items-center justify-center rounded-md border border-border-strong bg-surface px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           Log in
         </Link>

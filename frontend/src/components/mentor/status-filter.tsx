@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import type { StatusFilter } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
 
 const FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "ALL", label: "All" },
@@ -32,10 +33,9 @@ export function StatusFilterControl({
     >
       {FILTERS.map((filter) => {
         const selected = value === filter.value;
-        const showPendingBadge =
-          filter.value === "PENDING" &&
-          typeof pendingCount === "number" &&
-          pendingCount >= 0;
+        const isPendingFilter = filter.value === "PENDING";
+        const badgeValue =
+          typeof pendingCount === "number" && pendingCount >= 0 ? pendingCount : null;
 
         return (
           <Button
@@ -45,18 +45,19 @@ export function StatusFilterControl({
             variant={selected ? "default" : "outline"}
             aria-pressed={selected}
             disabled={disabled}
+            className={cn(isPendingFilter && "min-w-[8.75rem] justify-center")}
             onClick={() => onChange(filter.value)}
           >
             {filter.label}
-            {showPendingBadge ? (
+            {isPendingFilter ? (
               <span
                 className={
                   selected
-                    ? "rounded bg-primary-foreground/15 px-1.5 py-0.5 text-[0.7rem] tabular-nums"
-                    : "rounded bg-muted px-1.5 py-0.5 text-[0.7rem] tabular-nums text-subtle"
+                    ? "min-w-[1.25rem] rounded bg-primary-foreground/15 px-1.5 py-0.5 text-center text-[0.7rem] tabular-nums"
+                    : "min-w-[1.25rem] rounded bg-muted px-1.5 py-0.5 text-center text-[0.7rem] tabular-nums text-subtle"
                 }
               >
-                {pendingCount}
+                {badgeValue ?? "–"}
               </span>
             ) : null}
           </Button>

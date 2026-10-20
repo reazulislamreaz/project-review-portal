@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert } from "@/components/feedback/alert";
-import { StatsSkeleton, TableSkeleton } from "@/components/feedback/skeleton";
+import { StatsSkeleton } from "@/components/feedback/skeleton";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatsPanel } from "@/components/mentor/stats-panel";
 import { StatusFilterControl } from "@/components/mentor/status-filter";
@@ -31,6 +31,8 @@ import { useAuth } from "@/lib/auth/auth-context";
 
 const PAGE_LIMIT = 10;
 const MAX_FEEDBACK_LENGTH = 2000;
+/** Short pause so typing does not thrash layout with aborted requests. */
+const SEARCH_DEBOUNCE_MS = 200;
 
 type PendingReview = {
   submissionId: string;
@@ -220,17 +222,36 @@ export function MentorDashboard() {
     return () => controller.abort();
   }, [token, page, filter, searchQuery, sortOrder, refreshList]);
 
-  function resetListState() {
+  // Debounced search keeps previous rows mounted while the query settles.
+  useEffect(() => {
+    const trimmed = searchInput.trim();
+    const timer = window.setTimeout(() => {
+      if (trimmed === searchQuery) {
+        return;
+      }
+      setSearchQuery(trimmed);
+      setPage(1);
+      setActionMessage(null);
+      setActionError(null);
+      setListError(null);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [searchInput, searchQuery]);
+
+  function clearActionFeedback() {
     setActionMessage(null);
     setActionError(null);
-    setItems([]);
-    setPagination(null);
-    setListError(null);
   }
 
   function handleFilterChange(nextFilter: StatusFilter) {
-    resetListState();
+    if (nextFilter === filter) {
+      return;
+    }
+    clearActionFeedback();
+    setListError(null);
     // Needs-review queue defaults to oldest-first; other views keep newest-first.
+    // Keep previous rows visible until the new request resolves (no empty flash).
     if (nextFilter === "PENDING") {
       setSortOrder("asc");
     } else if (filter === "PENDING") {
@@ -241,24 +262,20 @@ export function MentorDashboard() {
   }
 
   function handlePageChange(nextPage: number) {
-    resetListState();
+    if (nextPage === page) {
+      return;
+    }
+    clearActionFeedback();
+    setListError(null);
     setPage(nextPage);
   }
 
-  function handleSearchChange(value: string) {
-    setSearchInput(value);
-    const trimmed = value.trim();
-    if (trimmed === searchQuery) {
+  function handleSortChange(nextSort: SortOrder) {
+    if (nextSort === sortOrder) {
       return;
     }
-    setSearchQuery(trimmed);
-    setPage(1);
-    setActionMessage(null);
-    setActionError(null);
-  }
-
-  function handleSortChange(nextSort: SortOrder) {
-    resetListState();
+    clearActionFeedback();
+    setListError(null);
     setSortOrder(nextSort);
     setPage(1);
   }
@@ -344,32 +361,33 @@ export function MentorDashboard() {
   }
 
   const controlsLocked = reviewingId !== null || pendingReview !== null;
-  const showInitialListSkeleton = listLoading && items.length === 0 && !listError;
 
   return (
     <div className="space-y-8">
       <PageHeader title="Review dashboard" />
 
-      {statsLoading && !stats ? (
-        <StatsSkeleton />
-      ) : (
-        <div className="space-y-3">
-          <StatsPanel stats={stats} loading={statsLoading} error={statsError} />
-          {statsError ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => void refreshStats()}
-            >
-              Retry statistics
-            </Button>
-          ) : null}
-        </div>
-      )}
+      <div className="min-h-[7.5rem]">
+        {statsLoading && !stats ? (
+          <StatsSkeleton />
+        ) : (
+          <div className="space-y-3">
+            <StatsPanel stats={stats} loading={statsLoading} error={statsError} />
+            {statsError ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void refreshStats()}
+              >
+                Retry statistics
+              </Button>
+            ) : null}
+          </div>
+        )}
+      </div>
 
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <StatusFilterControl
             value={filter}
             onChange={handleFilterChange}
@@ -377,31 +395,26 @@ export function MentorDashboard() {
             pendingCount={stats?.totalPending ?? null}
           />
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="w-full space-y-2 sm:max-w-xs">
+          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-[minmax(0,20rem)_11rem] sm:items-end lg:w-auto">
+            <div className="space-y-2">
               <Label htmlFor="mentor-search">Search</Label>
               <Input
                 id="mentor-search"
                 type="search"
                 value={searchInput}
-                onChange={(event) => handleSearchChange(event.target.value)}
+                onChange={(event) => setSearchInput(event.target.value)}
                 placeholder="Project, student, or email"
                 disabled={controlsLocked}
                 autoComplete="off"
-                aria-describedby="mentor-search-hint"
+                aria-label="Search by project, student, or email. Results update as you type."
               />
-              <p id="mentor-search-hint" className="sr-only">
-                Results update as you type. Each word is matched on the server.
-              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mentor-sort">
-                {filter === "PENDING" ? "Queue order" : "Sort by date"}
-              </Label>
+              <Label htmlFor="mentor-sort">Sort by date</Label>
               <select
                 id="mentor-sort"
-                className="flex h-10 w-full rounded-md border border-border-strong bg-surface px-3 text-sm text-foreground sm:w-44"
+                className="flex h-10 w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
                 value={sortOrder}
                 disabled={controlsLocked}
                 onChange={(event) => handleSortChange(event.target.value as SortOrder)}
@@ -413,45 +426,32 @@ export function MentorDashboard() {
           </div>
         </div>
 
-        {actionMessage ? <Alert variant="success">{actionMessage}</Alert> : null}
-        {actionError ? <Alert variant="error">{actionError}</Alert> : null}
-
-        {listError ? (
-          <div className="space-y-3">
-            <Alert variant="error">{listError}</Alert>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => void refreshList(page, filter, searchQuery, sortOrder)}
-            >
-              Try again
-            </Button>
+        {(actionMessage || actionError) && (
+          <div className="space-y-2" aria-live="polite">
+            {actionMessage ? <Alert variant="success">{actionMessage}</Alert> : null}
+            {actionError ? <Alert variant="error">{actionError}</Alert> : null}
           </div>
-        ) : null}
+        )}
 
-        {showInitialListSkeleton ? <TableSkeleton rows={6} /> : null}
-
-        {!listError && !showInitialListSkeleton ? (
-          <SubmissionsTable
-            items={items}
-            pagination={pagination}
-            loading={listLoading}
-            error={null}
-            reviewingId={reviewingId}
-            reviewLocked={pendingReview !== null}
-            pageSize={PAGE_LIMIT}
-            emptyMessage={
-              searchQuery
-                ? "No submissions match your search."
-                : filter === "PENDING"
-                  ? "No submissions need review right now."
-                  : "No submissions match this filter."
-            }
-            onPageChange={handlePageChange}
-            onReview={handleReviewRequest}
-          />
-        ) : null}
+        <SubmissionsTable
+          items={items}
+          pagination={pagination}
+          loading={listLoading}
+          error={listError}
+          reviewingId={reviewingId}
+          reviewLocked={pendingReview !== null}
+          pageSize={PAGE_LIMIT}
+          emptyMessage={
+            searchQuery
+              ? "No submissions match your search."
+              : filter === "PENDING"
+                ? "No submissions need review right now."
+                : "No submissions match this filter."
+          }
+          onPageChange={handlePageChange}
+          onReview={handleReviewRequest}
+          onRetry={() => void refreshList(page, filter, searchQuery, sortOrder)}
+        />
       </div>
 
       <ConfirmDialog

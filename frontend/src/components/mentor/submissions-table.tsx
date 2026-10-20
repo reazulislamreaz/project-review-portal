@@ -9,11 +9,12 @@ import {
   statusLabel,
 } from "@/lib/mentor/format";
 import type { MentorSubmissionView, PaginationMeta, ReviewStatus } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
 
 const COLUMN_COUNT = 7;
-/** Matches a typical data row so empty/padded views keep the same height. */
-const ROW_HEIGHT_CLASS = "h-14";
-const ROW_HEIGHT_REM = 3.5;
+/** Fixed row height so pending age text cannot stretch the table. */
+const ROW_HEIGHT_CLASS = "h-16";
+const ROW_HEIGHT_REM = 4;
 
 type SubmissionsTableProps = {
   items: MentorSubmissionView[];
@@ -28,6 +29,7 @@ type SubmissionsTableProps = {
   emptyMessage?: string;
   onPageChange: (page: number) => void;
   onReview: (submissionId: string, status: ReviewStatus) => void;
+  onRetry?: () => void;
 };
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
@@ -96,6 +98,7 @@ export function SubmissionsTable({
   emptyMessage = "No submissions match this filter.",
   onPageChange,
   onReview,
+  onRetry,
 }: SubmissionsTableProps) {
   const actionsDisabled = reviewingId !== null || reviewLocked;
   const page = pagination?.page ?? 1;
@@ -103,54 +106,63 @@ export function SubmissionsTable({
   const total = pagination?.total ?? 0;
   const canPrev = page > 1;
   const canNext = totalPages > 0 && page < totalPages;
-  const showRows = !error && !(loading && items.length === 0) && items.length > 0;
+  // Keep previous rows visible while a refresh is in flight (stale-while-revalidate).
+  const showRows = !error && items.length > 0;
+  const showEmpty = !error && !loading && items.length === 0;
+  const showLoadingPlaceholder = !error && loading && items.length === 0;
   const fillerCount = showRows ? Math.max(pageSize - items.length, 0) : 0;
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
-        <table className="w-full min-w-[64rem] border-collapse text-left text-sm">
+      <div
+        className={cn(
+          "overflow-x-auto rounded-lg border border-border bg-surface transition-opacity duration-200 ease-out",
+          loading && items.length > 0 ? "opacity-60" : "opacity-100",
+        )}
+        aria-busy={loading}
+      >
+        <table className="w-full min-w-[64rem] table-fixed border-collapse text-left text-sm">
           <thead className="bg-muted/50">
             <tr className="border-b border-border">
               <th
                 scope="col"
-                className="whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
+                className="w-[12%] whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
               >
                 Project
               </th>
               <th
                 scope="col"
-                className="whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
+                className="w-[16%] whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
               >
                 Student
               </th>
               <th
                 scope="col"
-                className="whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
+                className="w-[10%] whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
               >
                 Links
               </th>
               <th
                 scope="col"
-                className="min-w-[12rem] px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
+                className="w-[22%] px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
               >
                 Description
               </th>
               <th
                 scope="col"
-                className="whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
+                className="w-[10%] whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
               >
                 Status
               </th>
               <th
                 scope="col"
-                className="whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
+                className="w-[14%] whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
               >
                 Submitted
               </th>
               <th
                 scope="col"
-                className="w-44 whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
+                className="w-[16%] whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
               >
                 Actions
               </th>
@@ -159,11 +171,18 @@ export function SubmissionsTable({
           <tbody>
             {error ? (
               <TableMessageRow pageSize={pageSize}>
-                <Alert variant="error">{error}</Alert>
+                <div className="space-y-3">
+                  <Alert variant="error">{error}</Alert>
+                  {onRetry ? (
+                    <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+                      Try again
+                    </Button>
+                  ) : null}
+                </div>
               </TableMessageRow>
             ) : null}
 
-            {!error && loading && items.length === 0 ? (
+            {showLoadingPlaceholder ? (
               <TableMessageRow pageSize={pageSize}>
                 <p className="text-sm text-subtle" role="status" aria-live="polite">
                   Loading submissions...
@@ -171,7 +190,7 @@ export function SubmissionsTable({
               </TableMessageRow>
             ) : null}
 
-            {!error && !loading && items.length === 0 ? (
+            {showEmpty ? (
               <TableMessageRow pageSize={pageSize}>
                 <p className="text-sm text-subtle" role="status">
                   {emptyMessage}
@@ -189,10 +208,10 @@ export function SubmissionsTable({
                       key={submission.id}
                       className={`${ROW_HEIGHT_CLASS} border-b border-border last:border-b-0 hover:bg-muted/30`}
                     >
-                      <td className="max-w-[10rem] px-4 py-2.5 align-middle font-medium text-foreground">
+                      <td className="overflow-hidden px-4 py-2 align-middle font-medium text-foreground">
                         <span className="line-clamp-2 break-words">{submission.projectName}</span>
                       </td>
-                      <td className="max-w-[12rem] px-4 py-2.5 align-middle">
+                      <td className="overflow-hidden px-4 py-2 align-middle">
                         <div className="line-clamp-1 font-medium text-foreground">
                           {submission.student.name}
                         </div>
@@ -200,36 +219,38 @@ export function SubmissionsTable({
                           {submission.student.email}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2.5 align-middle">
+                      <td className="overflow-hidden px-4 py-2 align-middle">
                         <div className="flex flex-col gap-0.5 text-sm">
                           <ExternalLink href={submission.repoUrl}>Repository</ExternalLink>
                           <ExternalLink href={submission.liveUrl}>Live site</ExternalLink>
                         </div>
                       </td>
-                      <td className="max-w-[16rem] px-4 py-2.5 align-middle text-subtle">
+                      <td className="overflow-hidden px-4 py-2 align-middle text-subtle">
                         <p className="line-clamp-2 break-words">{submission.description}</p>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2.5 align-middle">
+                      <td className="overflow-hidden px-4 py-2 align-middle">
                         <span className="inline-flex rounded-md bg-muted px-2 py-1 text-xs font-medium text-foreground">
                           {statusLabel(submission.status)}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2.5 align-middle text-subtle">
-                        <div>{formatSubmissionDateCompact(submission.createdAt)}</div>
+                      <td className="overflow-hidden px-4 py-2 align-middle text-subtle">
+                        <div className="line-clamp-1">{formatSubmissionDateCompact(submission.createdAt)}</div>
                         {canReview ? (
-                          <div className="mt-0.5 text-xs text-muted-foreground">
+                          <div className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
                             {formatWaitingDuration(submission.createdAt)}
                           </div>
-                        ) : null}
+                        ) : (
+                          <div className="mt-0.5 h-4" aria-hidden="true" />
+                        )}
                       </td>
-                      <td className="px-4 py-2.5 align-middle">
+                      <td className="overflow-hidden px-4 py-2 align-middle">
                         {canReview ? (
                           <div className="flex flex-nowrap items-center gap-2">
                             <Button
                               type="button"
                               size="sm"
                               className="h-8 shrink-0 px-2.5 text-xs"
-                              disabled={actionsDisabled}
+                              disabled={actionsDisabled || loading}
                               onClick={() => onReview(submission.id, "APPROVED")}
                             >
                               {busy ? "Saving..." : "Approve"}
@@ -239,7 +260,7 @@ export function SubmissionsTable({
                               size="sm"
                               variant="outline"
                               className="h-8 shrink-0 px-2.5 text-xs"
-                              disabled={actionsDisabled}
+                              disabled={actionsDisabled || loading}
                               onClick={() => onReview(submission.id, "REJECTED")}
                             >
                               Reject
@@ -260,9 +281,9 @@ export function SubmissionsTable({
       </div>
 
       <div className="flex min-h-10 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-subtle" aria-live="polite">
+        <p className="min-h-5 text-sm text-subtle" aria-live="polite">
           Page {page} of {Math.max(totalPages, 1)} · {total} total
-          {loading ? " · Refreshing..." : ""}
+          {loading ? " · Updating…" : ""}
         </p>
         <div className="flex gap-2">
           <Button
