@@ -8,7 +8,7 @@ export const MAX_FEEDBACK_LENGTH = 2000;
 export const listSubmissionsQuerySchema = z
   .object({
     status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
-    /** Case-insensitive search across project name and student email. */
+    /** Case-insensitive multi-word search across project name, student name, and email. */
     q: z
       .string()
       .trim()

@@ -202,6 +202,33 @@ describe("Enhancements: feedback, search/sort, profile, timeline fields", () => 
     expect(byEmail.status).toBe(200);
     expect(byEmail.body.data.items).toHaveLength(1);
     expect(byEmail.body.data.items[0].student.email).toBe("bob.search@example.com");
+
+    const byStudentName = await request(app)
+      .get("/api/submissions")
+      .query({ q: "Ada" })
+      .set("Authorization", `Bearer ${mToken}`);
+
+    expect(byStudentName.status).toBe(200);
+    expect(byStudentName.body.data.items).toHaveLength(1);
+    expect(byStudentName.body.data.items[0].student.name).toBe("Ada Search");
+
+    // Each word must match (AND across tokens).
+    const byWords = await request(app)
+      .get("/api/submissions")
+      .query({ q: "Neon Portfolio" })
+      .set("Authorization", `Bearer ${mToken}`);
+
+    expect(byWords.status).toBe(200);
+    expect(byWords.body.data.items).toHaveLength(1);
+    expect(byWords.body.data.items[0].projectName).toBe("Neon Portfolio");
+
+    const partialWords = await request(app)
+      .get("/api/submissions")
+      .query({ q: "Neon missing" })
+      .set("Authorization", `Bearer ${mToken}`);
+
+    expect(partialWords.status).toBe(200);
+    expect(partialWords.body.data.items).toHaveLength(0);
   });
 
   it("sorts by createdAt with status filter and pagination", async () => {

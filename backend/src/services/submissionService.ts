@@ -136,20 +136,40 @@ export async function createSubmissionForStudent(
   }
 }
 
+/**
+ * Split a mentor search query into words. Each word must match (AND);
+ * within a word, project name, student name, or email may match (OR).
+ */
+function buildSearchWhere(q: string): Prisma.SubmissionWhereInput {
+  const terms = q.split(/\s+/).filter((term) => term.length > 0);
+  if (terms.length === 0) {
+    return {};
+  }
+
+  const termClause = (term: string): Prisma.SubmissionWhereInput => ({
+    OR: [
+      { projectName: { contains: term, mode: "insensitive" } },
+      { student: { name: { contains: term, mode: "insensitive" } } },
+      { student: { email: { contains: term, mode: "insensitive" } } },
+    ],
+  });
+
+  if (terms.length === 1) {
+    return termClause(terms[0]!);
+  }
+
+  return {
+    AND: terms.map((term) => termClause(term)),
+  };
+}
+
 /** Mentor listing with optional status filter, search, sort, and pagination. */
 export async function listSubmissionsForMentor(
   query: ListSubmissionsQuery,
 ): Promise<PaginatedSubmissions> {
   const where: Prisma.SubmissionWhereInput = {
     ...(query.status ? { status: query.status } : {}),
-    ...(query.q
-      ? {
-          OR: [
-            { projectName: { contains: query.q, mode: "insensitive" } },
-            { student: { email: { contains: query.q, mode: "insensitive" } } },
-          ],
-        }
-      : {}),
+    ...(query.q ? buildSearchWhere(query.q) : {}),
   };
 
   const skip = (query.page - 1) * query.limit;

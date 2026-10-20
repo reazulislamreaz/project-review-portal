@@ -245,11 +245,16 @@ export function MentorDashboard() {
     setPage(nextPage);
   }
 
-  function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    resetListState();
-    setSearchQuery(searchInput.trim());
+  function handleSearchChange(value: string) {
+    setSearchInput(value);
+    const trimmed = value.trim();
+    if (trimmed === searchQuery) {
+      return;
+    }
+    setSearchQuery(trimmed);
     setPage(1);
+    setActionMessage(null);
+    setActionError(null);
   }
 
   function handleSortChange(nextSort: SortOrder) {
@@ -373,25 +378,22 @@ export function MentorDashboard() {
           />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <form
-              className="flex w-full flex-col gap-2 sm:max-w-xs"
-              onSubmit={handleSearchSubmit}
-            >
+            <div className="w-full space-y-2 sm:max-w-xs">
               <Label htmlFor="mentor-search">Search</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="mentor-search"
-                  value={searchInput}
-                  onChange={(event) => setSearchInput(event.target.value)}
-                  placeholder="Project name or email"
-                  disabled={controlsLocked}
-                  autoComplete="off"
-                />
-                <Button type="submit" variant="outline" disabled={controlsLocked}>
-                  Search
-                </Button>
-              </div>
-            </form>
+              <Input
+                id="mentor-search"
+                type="search"
+                value={searchInput}
+                onChange={(event) => handleSearchChange(event.target.value)}
+                placeholder="Project, student, or email"
+                disabled={controlsLocked}
+                autoComplete="off"
+                aria-describedby="mentor-search-hint"
+              />
+              <p id="mentor-search-hint" className="sr-only">
+                Results update as you type. Each word is matched on the server.
+              </p>
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="mentor-sort">
