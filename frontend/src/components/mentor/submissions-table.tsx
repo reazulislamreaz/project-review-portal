@@ -56,7 +56,7 @@ function TableMessageRow({
     <tr>
       <td
         colSpan={COLUMN_COUNT}
-        className="px-4 align-middle"
+        className="px-4 text-center align-middle"
         style={{ height: `${pageSize * ROW_HEIGHT_REM}rem` }}
       >
         {children}
