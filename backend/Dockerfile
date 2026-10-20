@@ -10,12 +10,15 @@ RUN npx prisma generate
 
 COPY tsconfig.json ./
 COPY src ./src
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
 
-RUN npm run build
+RUN npm run build \
+  && chmod +x ./docker-entrypoint.sh
 
 ENV NODE_ENV=production
 ENV PORT=4000
 
 EXPOSE 4000
 
-CMD ["npm", "start"]
+CMD ["./docker-entrypoint.sh"]
+

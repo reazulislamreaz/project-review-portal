@@ -1,6 +1,6 @@
 # Frontend
 
-Next.js App Router frontend for the Project Submission and Review Dashboard.
+Next.js App Router UI for the Project Submission and Review Dashboard.
 
 ## Local setup
 
@@ -12,14 +12,17 @@ npm run dev
 
 Open http://localhost:3000.
 
-`NEXT_PUBLIC_API_URL` must point at the Express API (default `http://localhost:4000`).
+`NEXT_PUBLIC_API_URL` must point at the Express API (default `http://localhost:4000`). Never put `JWT_SECRET` or other backend secrets in frontend env files.
 
 ## Scripts
 
-- `npm run dev` — development server
-- `npm run build` — production build
-- `npm run start` — start production server
-- `npm run lint` — ESLint
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript (`tsc --noEmit`) |
 
 ## Authentication notes
 
@@ -28,6 +31,10 @@ Open http://localhost:3000.
 - HttpOnly cookie auth is not used because the backend does not set session cookies.
 - Logout clears local auth state only; there is no backend logout endpoint.
 - Client route guards are UX only. Backend JWT + RBAC remain authoritative.
+
+### Token storage trade-off
+
+`localStorage` JWTs are convenient with the current Bearer API but are XSS-sensitive. Prefer safe React text rendering (no `dangerouslySetInnerHTML` for user content) and keep dependencies minimal. Redesigning to HttpOnly cookies would require backend auth changes and is out of scope for this assignment.
 
 ## Student submissions
 
@@ -41,3 +48,4 @@ Open http://localhost:3000.
 - Mentors use `/mentor` with `GET /api/dashboard/stats`, `GET /api/submissions`, and `PATCH /api/submissions/:id/status`.
 - Filters (`All`, `Approved`, `Rejected`) and pagination are server-side query parameters.
 - Approve/Reject are shown only for `PENDING` submissions and require confirmation.
+- External links use `target="_blank"` and `rel="noopener noreferrer"`. Descriptions are rendered as plain text.
