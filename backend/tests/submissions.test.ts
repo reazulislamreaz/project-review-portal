@@ -149,6 +149,34 @@ describe("B4 student submissions", () => {
         expect.objectContaining({ field: expect.any(String) }),
       ]),
     );
+    expect(JSON.stringify(response.body)).not.toMatch(/stack/i);
+    expect(JSON.stringify(response.body)).not.toMatch(/prisma/i);
+  });
+
+  it("rejects whitespace-only fields and non-http(s) schemes", async () => {
+    const { token } = await signupStudent();
+
+    const whitespace = await request(app)
+      .post("/api/submissions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        projectName: "   ",
+        repoUrl: "https://github.com/ada/portfolio",
+        liveUrl: "https://ada-portfolio.example.com",
+        description: "\t\n",
+      });
+
+    expect(whitespace.status).toBe(400);
+
+    const javascriptUrl = await request(app)
+      .post("/api/submissions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        ...validSubmission,
+        repoUrl: "javascript:alert(1)",
+      });
+
+    expect(javascriptUrl.status).toBe(400);
   });
 
   it("rejects duplicate submissions for the same student", async () => {
@@ -203,17 +231,61 @@ describe("B4 student submissions", () => {
     expect(limited.body.message).toMatch(/too many/i);
   });
 
-  it("does not leak internal database details for unexpected failures", async () => {
+  it("does not leak internal database details on success or duplicate conflict", async () => {
     const { token } = await signupStudent();
 
-    const response = await request(app)
+    const created = await request(app)
       .post("/api/submissions")
       .set("Authorization", `Bearer ${token}`)
       .send(validSubmission);
 
-    expect(response.status).toBe(201);
-    expect(JSON.stringify(response.body)).not.toMatch(/passwordHash/i);
-    expect(JSON.stringify(response.body)).not.toMatch(/prisma/i);
-    expect(JSON.stringify(response.body)).not.toMatch(/stack/i);
+    const duplicate = await request(app)
+      .post("/api/submissions")
+      .set("Authorization", `Bearer ${token}`)
+      .send(validSubmission);
+
+    expect(created.status).toBe(201);
+    expect(duplicate.status).toBe(409);
+    expect(duplicate.body.message).toBe("You have already submitted a project");
+
+    for (const body of [created.body, duplicate.body]) {
+      expect(JSON.stringify(body)).not.toMatch(/passwordHash/i);
+      expect(JSON.stringify(body)).not.toMatch(/prisma/i);
+      expect(JSON.stringify(body)).not.toMatch(/stack/i);
+      expect(JSON.stringify(body)).not.toMatch(/P2002/i);
+    }
   });
 });
+
+describe("B4 rate limiter store cleanup", () => {
+  it("prunes expired keys so memory stays bounded", async () => {
+    const { createRateLimiter } = await import("../src/middlewares/rateLimit");
+    const { AppError } = await import("../src/utils/errors");
+
+    const limiter = createRateLimiter({
+      max: 1,
+      windowMs: 20,
+      keyFn: (req) => String((req as { key?: string }).key ?? "default"),
+    });
+
+    const run = (key: string) =>
+      new Promise<Error | undefined>((resolve) => {
+        limiter.middleware({ key } as never, {} as never, (err?: unknown) => {
+          resolve(err instanceof Error ? err : undefined);
+        });
+      });
+
+    expect(await run("a")).toBeUndefined();
+    expect(await run("b")).toBeUndefined();
+    expect(limiter.size()).toBe(2);
+
+    expect(await run("a")).toBeInstanceOf(AppError);
+    expect(limiter.size()).toBe(2);
+
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    expect(await run("c")).toBeUndefined();
+    expect(limiter.size()).toBe(1);
+  });
+});
+

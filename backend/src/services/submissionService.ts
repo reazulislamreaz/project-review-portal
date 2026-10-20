@@ -29,6 +29,20 @@ function toSafeSubmission(submission: Submission): SafeSubmission {
   };
 }
 
+function isStudentIdUniqueViolation(error: Prisma.PrismaClientKnownRequestError): boolean {
+  const target = error.meta?.target;
+
+  if (Array.isArray(target)) {
+    return target.includes("studentId");
+  }
+
+  if (typeof target === "string") {
+    return target === "studentId" || target.includes("studentId");
+  }
+
+  return false;
+}
+
 /**
  * Create a project submission for the authenticated student.
  * Duplicate policy (B0 D1 / B2 unique studentId): one submission per student.
@@ -51,7 +65,11 @@ export async function createSubmissionForStudent(
 
     return toSafeSubmission(submission);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002" &&
+      isStudentIdUniqueViolation(error)
+    ) {
       throw new AppError("You have already submitted a project", 409);
     }
 
