@@ -173,12 +173,15 @@ describe("B3 authentication", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(200);
-    expect(response.body.data.user).toEqual({
-      id: signup.body.data.user.id,
-      name: student.name,
-      email: "ada@example.com",
-      role: "STUDENT",
-    });
+    expect(response.body.data.user).toEqual(
+      expect.objectContaining({
+        id: signup.body.data.user.id,
+        name: student.name,
+        email: "ada@example.com",
+        role: "STUDENT",
+        createdAt: expect.any(String),
+      }),
+    );
     expect(response.body.data.user).not.toHaveProperty("passwordHash");
   });
 

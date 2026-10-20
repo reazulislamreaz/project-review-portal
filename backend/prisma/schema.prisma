@@ -41,6 +41,10 @@ model Submission {
   liveUrl     String
   description String
   status      SubmissionStatus @default(PENDING)
+  /// Optional mentor feedback set when approving or rejecting.
+  feedback    String?
+  /// Set once when a mentor approves or rejects (null while PENDING).
+  reviewedAt  DateTime?
   studentId   String           @unique
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -48,4 +52,5 @@ model Submission {
   student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([status])
+  @@index([createdAt])
 }

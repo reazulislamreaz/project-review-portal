@@ -3,11 +3,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert } from "@/components/feedback/alert";
+import { StatsSkeleton, TableSkeleton } from "@/components/feedback/skeleton";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatsPanel } from "@/components/mentor/stats-panel";
 import { StatusFilterControl } from "@/components/mentor/status-filter";
 import { SubmissionsTable } from "@/components/mentor/submissions-table";
+import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { getDashboardStats } from "@/lib/api/dashboard";
 import {
   listSubmissionsForMentor,
@@ -19,11 +24,13 @@ import {
   type MentorSubmissionView,
   type PaginationMeta,
   type ReviewStatus,
+  type SortOrder,
   type StatusFilter,
 } from "@/lib/api/types";
 import { useAuth } from "@/lib/auth/auth-context";
 
 const PAGE_LIMIT = 10;
+const MAX_FEEDBACK_LENGTH = 2000;
 
 type PendingReview = {
   submissionId: string;
@@ -72,6 +79,9 @@ export function MentorDashboard() {
 
   const [filter, setFilter] = useState<StatusFilter>("ALL");
   const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [items, setItems] = useState<MentorSubmissionView[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -84,6 +94,7 @@ export function MentorDashboard() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [pendingReview, setPendingReview] = useState<PendingReview | null>(null);
+  const [feedbackDraft, setFeedbackDraft] = useState("");
 
   const handleAuthFailure = useCallback(() => {
     logout();
@@ -128,7 +139,13 @@ export function MentorDashboard() {
   );
 
   const refreshList = useCallback(
-    async (nextPage: number, nextFilter: StatusFilter, signal?: AbortSignal) => {
+    async (
+      nextPage: number,
+      nextFilter: StatusFilter,
+      nextQuery: string,
+      nextSort: SortOrder,
+      signal?: AbortSignal,
+    ) => {
       if (!token) {
         return;
       }
@@ -141,6 +158,9 @@ export function MentorDashboard() {
           page: nextPage,
           limit: PAGE_LIMIT,
           status: nextFilter === "ALL" ? undefined : nextFilter,
+          q: nextQuery || undefined,
+          sortBy: "createdAt",
+          sortOrder: nextSort,
         });
 
         if (signal?.aborted) {
@@ -150,7 +170,6 @@ export function MentorDashboard() {
         setItems(result.items);
         setPagination(result.pagination);
 
-        // If the current page is empty after a review but earlier pages exist, step back.
         if (
           result.items.length === 0 &&
           result.pagination.page > 1 &&
@@ -197,27 +216,40 @@ export function MentorDashboard() {
     }
 
     const controller = new AbortController();
-    void refreshList(page, filter, controller.signal);
+    void refreshList(page, filter, searchQuery, sortOrder, controller.signal);
     return () => controller.abort();
-  }, [token, page, filter, refreshList]);
+  }, [token, page, filter, searchQuery, sortOrder, refreshList]);
 
-  function handleFilterChange(nextFilter: StatusFilter) {
+  function resetListState() {
     setActionMessage(null);
     setActionError(null);
     setItems([]);
     setPagination(null);
     setListError(null);
+  }
+
+  function handleFilterChange(nextFilter: StatusFilter) {
+    resetListState();
     setFilter(nextFilter);
     setPage(1);
   }
 
   function handlePageChange(nextPage: number) {
-    setActionMessage(null);
-    setActionError(null);
-    setItems([]);
-    setPagination(null);
-    setListError(null);
+    resetListState();
     setPage(nextPage);
+  }
+
+  function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    resetListState();
+    setSearchQuery(searchInput.trim());
+    setPage(1);
+  }
+
+  function handleSortChange(nextSort: SortOrder) {
+    resetListState();
+    setSortOrder(nextSort);
+    setPage(1);
   }
 
   function handleReviewRequest(submissionId: string, status: ReviewStatus) {
@@ -228,6 +260,7 @@ export function MentorDashboard() {
     const submission = items.find((item) => item.id === submissionId);
     setActionMessage(null);
     setActionError(null);
+    setFeedbackDraft("");
     setPendingReview({
       submissionId,
       projectName: submission?.projectName ?? "this submission",
@@ -240,10 +273,16 @@ export function MentorDashboard() {
       return;
     }
     setPendingReview(null);
+    setFeedbackDraft("");
   }
 
   async function handleReviewConfirm() {
     if (!token || !pendingReview || reviewingId) {
+      return;
+    }
+
+    if (feedbackDraft.length > MAX_FEEDBACK_LENGTH) {
+      setActionError(`Feedback must be at most ${MAX_FEEDBACK_LENGTH} characters.`);
       return;
     }
 
@@ -253,16 +292,26 @@ export function MentorDashboard() {
     setReviewingId(submissionId);
 
     try {
-      const updated = await updateSubmissionStatus(submissionId, status, token);
+      const updated = await updateSubmissionStatus(
+        submissionId,
+        status,
+        token,
+        feedbackDraft,
+      );
       setPendingReview(null);
+      setFeedbackDraft("");
       setActionMessage(
         status === "APPROVED"
           ? `“${updated.projectName}” was approved.`
           : `“${updated.projectName}” was rejected.`,
       );
-      await Promise.all([refreshList(page, filter), refreshStats()]);
+      await Promise.all([
+        refreshList(page, filter, searchQuery, sortOrder),
+        refreshStats(),
+      ]);
     } catch (error) {
       setPendingReview(null);
+      setFeedbackDraft("");
       if (error instanceof ApiError) {
         if (error.status === 401) {
           handleAuthFailure();
@@ -270,7 +319,10 @@ export function MentorDashboard() {
         }
         setActionError(reviewErrorMessage(error));
         if (error.status === 404 || error.status === 409) {
-          await Promise.all([refreshList(page, filter), refreshStats()]);
+          await Promise.all([
+            refreshList(page, filter, searchQuery, sortOrder),
+            refreshStats(),
+          ]);
         }
       } else {
         setActionError("Unable to update the submission. Please try again.");
@@ -280,33 +332,113 @@ export function MentorDashboard() {
     }
   }
 
+  const controlsLocked = reviewingId !== null || pendingReview !== null;
+  const showInitialListSkeleton = listLoading && items.length === 0 && !listError;
+
   return (
     <div className="space-y-8">
       <PageHeader title="Review dashboard" />
 
-      <StatsPanel stats={stats} loading={statsLoading} error={statsError} />
+      {statsLoading && !stats ? (
+        <StatsSkeleton />
+      ) : (
+        <div className="space-y-3">
+          <StatsPanel stats={stats} loading={statsLoading} error={statsError} />
+          {statsError ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void refreshStats()}
+            >
+              Retry statistics
+            </Button>
+          ) : null}
+        </div>
+      )}
 
       <div className="space-y-4">
-        <StatusFilterControl
-          value={filter}
-          onChange={handleFilterChange}
-          disabled={reviewingId !== null || pendingReview !== null}
-        />
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <StatusFilterControl
+            value={filter}
+            onChange={handleFilterChange}
+            disabled={controlsLocked}
+          />
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <form
+              className="flex w-full flex-col gap-2 sm:max-w-xs"
+              onSubmit={handleSearchSubmit}
+            >
+              <Label htmlFor="mentor-search">Search</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="mentor-search"
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder="Project name or email"
+                  disabled={controlsLocked}
+                  autoComplete="off"
+                />
+                <Button type="submit" variant="outline" disabled={controlsLocked}>
+                  Search
+                </Button>
+              </div>
+            </form>
+
+            <div className="space-y-2">
+              <Label htmlFor="mentor-sort">Sort by date</Label>
+              <select
+                id="mentor-sort"
+                className="flex h-10 w-full rounded-md border border-border-strong bg-surface px-3 text-sm text-foreground sm:w-44"
+                value={sortOrder}
+                disabled={controlsLocked}
+                onChange={(event) => handleSortChange(event.target.value as SortOrder)}
+              >
+                <option value="desc">Newest first</option>
+                <option value="asc">Oldest first</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
         {actionMessage ? <Alert variant="success">{actionMessage}</Alert> : null}
         {actionError ? <Alert variant="error">{actionError}</Alert> : null}
 
-        <SubmissionsTable
-          items={items}
-          pagination={pagination}
-          loading={listLoading}
-          error={listError}
-          reviewingId={reviewingId}
-          reviewLocked={pendingReview !== null}
-          pageSize={PAGE_LIMIT}
-          onPageChange={handlePageChange}
-          onReview={handleReviewRequest}
-        />
+        {listError ? (
+          <div className="space-y-3">
+            <Alert variant="error">{listError}</Alert>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void refreshList(page, filter, searchQuery, sortOrder)}
+            >
+              Try again
+            </Button>
+          </div>
+        ) : null}
+
+        {showInitialListSkeleton ? <TableSkeleton rows={6} /> : null}
+
+        {!listError && !showInitialListSkeleton ? (
+          <SubmissionsTable
+            items={items}
+            pagination={pagination}
+            loading={listLoading}
+            error={null}
+            reviewingId={reviewingId}
+            reviewLocked={pendingReview !== null}
+            pageSize={PAGE_LIMIT}
+            emptyMessage={
+              searchQuery
+                ? "No submissions match your search."
+                : "No submissions match this filter."
+            }
+            onPageChange={handlePageChange}
+            onReview={handleReviewRequest}
+          />
+        ) : null}
       </div>
 
       <ConfirmDialog
@@ -330,7 +462,23 @@ export function MentorDashboard() {
           void handleReviewConfirm();
         }}
         onCancel={handleReviewCancel}
-      />
+      >
+        <div className="space-y-2">
+          <Label htmlFor="review-feedback">Feedback (optional)</Label>
+          <Textarea
+            id="review-feedback"
+            value={feedbackDraft}
+            onChange={(event) => setFeedbackDraft(event.target.value)}
+            placeholder="Share brief notes for the student"
+            disabled={reviewingId !== null}
+            maxLength={MAX_FEEDBACK_LENGTH}
+            className="min-h-24"
+          />
+          <p className="text-xs text-muted-foreground">
+            {feedbackDraft.length}/{MAX_FEEDBACK_LENGTH}
+          </p>
+        </div>
+      </ConfirmDialog>
     </div>
   );
 }

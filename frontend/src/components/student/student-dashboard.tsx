@@ -1,11 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert } from "@/components/feedback/alert";
+import { CardSkeleton } from "@/components/feedback/skeleton";
 import { PageHeader } from "@/components/layout/page-header";
+import { StatusTimeline } from "@/components/student/status-timeline";
 import { SubmissionDetails } from "@/components/student/submission-details";
 import { SubmissionForm } from "@/components/student/submission-form";
+import { Button } from "@/components/ui/button";
 import { getMySubmission } from "@/lib/api/submissions";
 import { ApiError, type SafeSubmission } from "@/lib/api/types";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -103,10 +107,18 @@ export function StudentDashboard() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title={user ? `Welcome, ${user.name}` : "Welcome"}
-        description="Track your project submission and review status. Each student may submit only once."
-      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <PageHeader
+          title={user ? `Welcome, ${user.name}` : "Welcome"}
+          description="Track your project submission and review status. Each student may submit only once."
+        />
+        <Link
+          href="/student/profile"
+          className="inline-flex h-9 shrink-0 items-center self-start rounded-md border border-border-strong bg-surface px-3 text-sm font-medium text-foreground hover:bg-muted"
+        >
+          View profile
+        </Link>
+      </div>
 
       <section aria-labelledby="overview-heading" className="space-y-3">
         <h2 id="overview-heading" className="text-sm font-medium text-foreground">
@@ -130,13 +142,21 @@ export function StudentDashboard() {
         </div>
       </section>
 
-      {error ? <Alert variant="error">{error}</Alert> : null}
-
-      {loading ? (
-        <p className="text-sm text-subtle" role="status" aria-live="polite">
-          Loading your submission...
-        </p>
+      {error ? (
+        <div className="space-y-3">
+          <Alert variant="error">{error}</Alert>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void refreshSubmission()}
+          >
+            Try again
+          </Button>
+        </div>
       ) : null}
+
+      {loading ? <CardSkeleton /> : null}
 
       {!loading && !error && justSubmitted && submission ? (
         <Alert variant="success" title="Submission received">
@@ -145,7 +165,10 @@ export function StudentDashboard() {
       ) : null}
 
       {!loading && !error && submission ? (
-        <SubmissionDetails submission={submission} />
+        <div className="space-y-6">
+          <StatusTimeline submission={submission} />
+          <SubmissionDetails submission={submission} />
+        </div>
       ) : null}
 
       {!loading && !error && !submission ? (

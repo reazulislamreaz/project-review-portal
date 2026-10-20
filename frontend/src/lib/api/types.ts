@@ -5,6 +5,7 @@ export type SafeUser = {
   name: string;
   email: string;
   role: Role;
+  createdAt: string;
 };
 
 export type AuthResult = {
@@ -21,6 +22,8 @@ export type SafeSubmission = {
   liveUrl: string;
   description: string;
   status: SubmissionStatus;
+  feedback: string | null;
+  reviewedAt: string | null;
   studentId: string;
   createdAt: string;
   updatedAt: string;
@@ -59,6 +62,8 @@ export type DashboardStats = {
 export type ReviewStatus = "APPROVED" | "REJECTED";
 
 export type StatusFilter = "ALL" | SubmissionStatus;
+
+export type SortOrder = "asc" | "desc";
 
 export type ApiSuccess<T> = {
   success: true;

@@ -21,6 +21,7 @@ type SubmissionsTableProps = {
   reviewLocked?: boolean;
   /** API page size — used to keep body height stable across filters. */
   pageSize?: number;
+  emptyMessage?: string;
   onPageChange: (page: number) => void;
   onReview: (submissionId: string, status: ReviewStatus) => void;
 };
@@ -88,6 +89,7 @@ export function SubmissionsTable({
   reviewingId,
   reviewLocked = false,
   pageSize = 10,
+  emptyMessage = "No submissions match this filter.",
   onPageChange,
   onReview,
 }: SubmissionsTableProps) {
@@ -168,7 +170,7 @@ export function SubmissionsTable({
             {!error && !loading && items.length === 0 ? (
               <TableMessageRow pageSize={pageSize}>
                 <p className="text-sm text-subtle" role="status">
-                  No submissions match this filter.
+                  {emptyMessage}
                 </p>
               </TableMessageRow>
             ) : null}

@@ -4,6 +4,7 @@ import type {
   PaginatedSubmissions,
   ReviewStatus,
   SafeSubmission,
+  SortOrder,
   SubmissionStatus,
 } from "./types";
 
@@ -18,6 +19,9 @@ export type ListSubmissionsParams = {
   page?: number;
   limit?: number;
   status?: SubmissionStatus;
+  q?: string;
+  sortBy?: "createdAt";
+  sortOrder?: SortOrder;
 };
 
 export async function createSubmission(
@@ -50,9 +54,14 @@ export async function listSubmissionsForMentor(
   const query = new URLSearchParams();
   query.set("page", String(params.page ?? 1));
   query.set("limit", String(params.limit ?? 10));
+  query.set("sortBy", params.sortBy ?? "createdAt");
+  query.set("sortOrder", params.sortOrder ?? "desc");
 
   if (params.status) {
     query.set("status", params.status);
+  }
+  if (params.q && params.q.trim().length > 0) {
+    query.set("q", params.q.trim());
   }
 
   return apiRequest<PaginatedSubmissions>(`/api/submissions?${query.toString()}`, {
@@ -65,12 +74,18 @@ export async function updateSubmissionStatus(
   submissionId: string,
   status: ReviewStatus,
   token: string,
+  feedback?: string | null,
 ): Promise<MentorSubmissionView> {
+  const body: { status: ReviewStatus; feedback?: string | null } = { status };
+  if (feedback !== undefined) {
+    body.feedback = feedback;
+  }
+
   const data = await apiRequest<{ submission: MentorSubmissionView }>(
     `/api/submissions/${encodeURIComponent(submissionId)}/status`,
     {
       method: "PATCH",
-      body: { status },
+      body,
       token,
     },
   );

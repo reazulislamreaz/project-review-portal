@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 
 export type ConfirmDialogProps = {
@@ -11,6 +11,7 @@ export type ConfirmDialogProps = {
   cancelLabel?: string;
   confirmVariant?: ButtonProps["variant"];
   busy?: boolean;
+  children?: ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -23,6 +24,7 @@ export function ConfirmDialog({
   cancelLabel = "Cancel",
   confirmVariant = "default",
   busy = false,
+  children,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -92,6 +94,7 @@ export function ConfirmDialog({
             {description}
           </p>
         </div>
+        {children ? <div className="space-y-2">{children}</div> : null}
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" disabled={busy} onClick={onCancel}>
             {cancelLabel}

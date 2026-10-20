@@ -11,6 +11,7 @@ export type SafeUser = {
   name: string;
   email: string;
   role: Role;
+  createdAt: Date;
 };
 
 export type AuthResult = {
@@ -24,6 +25,7 @@ function toSafeUser(user: User): SafeUser {
     name: user.name,
     email: user.email,
     role: user.role,
+    createdAt: user.createdAt,
   };
 }
 

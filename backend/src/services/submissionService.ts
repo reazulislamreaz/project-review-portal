@@ -21,6 +21,8 @@ export type SafeSubmission = {
   liveUrl: string;
   description: string;
   status: Submission["status"];
+  feedback: string | null;
+  reviewedAt: Date | null;
   studentId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -55,6 +57,8 @@ function toSafeSubmission(submission: Submission): SafeSubmission {
     liveUrl: submission.liveUrl,
     description: submission.description,
     status: submission.status,
+    feedback: submission.feedback,
+    reviewedAt: submission.reviewedAt,
     studentId: submission.studentId,
     createdAt: submission.createdAt,
     updatedAt: submission.updatedAt,
@@ -132,15 +136,29 @@ export async function createSubmissionForStudent(
   }
 }
 
-/** Mentor listing with optional status filter and server-side pagination. */
+/** Mentor listing with optional status filter, search, sort, and pagination. */
 export async function listSubmissionsForMentor(
   query: ListSubmissionsQuery,
 ): Promise<PaginatedSubmissions> {
-  const where: Prisma.SubmissionWhereInput = query.status
-    ? { status: query.status }
-    : {};
+  const where: Prisma.SubmissionWhereInput = {
+    ...(query.status ? { status: query.status } : {}),
+    ...(query.q
+      ? {
+          OR: [
+            { projectName: { contains: query.q, mode: "insensitive" } },
+            { student: { email: { contains: query.q, mode: "insensitive" } } },
+          ],
+        }
+      : {}),
+  };
 
   const skip = (query.page - 1) * query.limit;
+  const sortOrder = query.sortOrder;
+  // Deterministic secondary sort on id matching primary direction.
+  const orderBy: Prisma.SubmissionOrderByWithRelationInput[] = [
+    { [query.sortBy]: sortOrder },
+    { id: sortOrder },
+  ];
 
   const [total, rows] = await prisma.$transaction([
     prisma.submission.count({ where }),
@@ -148,7 +166,7 @@ export async function listSubmissionsForMentor(
       where,
       skip,
       take: query.limit,
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      orderBy,
       include: {
         student: { select: studentSelect },
       },
@@ -169,14 +187,16 @@ export async function listSubmissionsForMentor(
 }
 
 /**
- * Approve or reject a pending submission.
+ * Approve or reject a pending submission, optionally with mentor feedback.
  * Concurrent-safe: update only succeeds when current status is still PENDING.
+ * Status, feedback, and reviewedAt are written in one update.
  */
 export async function updateSubmissionStatusForMentor(
   submissionId: string,
   input: UpdateSubmissionStatusInput,
 ): Promise<MentorSubmissionView> {
   const nextStatus: SubmissionStatus = input.status;
+  const reviewedAt = new Date();
 
   const updated = await prisma.submission.updateMany({
     where: {
@@ -185,6 +205,8 @@ export async function updateSubmissionStatusForMentor(
     },
     data: {
       status: nextStatus,
+      feedback: input.feedback,
+      reviewedAt,
     },
   });
 

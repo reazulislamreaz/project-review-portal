@@ -16,7 +16,7 @@ function statusMessage(status: SafeSubmission["status"]): string {
     case "APPROVED":
       return "Your project has been approved.";
     case "REJECTED":
-      return "Your project was rejected. Contact your mentor if you need more detail.";
+      return "Your project was rejected.";
     default:
       return `Current status is ${status}.`;
   }
@@ -53,6 +53,12 @@ export function SubmissionDetails({ submission }: SubmissionDetailsProps) {
         <Alert variant={alertVariant} title={`Status: ${statusLabel(submission.status)}`}>
           {statusMessage(submission.status)}
         </Alert>
+
+        {submission.feedback ? (
+          <Alert variant="info" title="Mentor feedback">
+            {submission.feedback}
+          </Alert>
+        ) : null}
 
         <dl className="divide-y divide-border border-t border-border text-sm">
           <div className="grid gap-1 py-3 sm:grid-cols-[9rem_1fr] sm:gap-4">
@@ -93,6 +99,12 @@ export function SubmissionDetails({ submission }: SubmissionDetailsProps) {
             <dt className="font-medium text-foreground">Submitted</dt>
             <dd className="text-subtle">{formatSubmissionDate(submission.createdAt)}</dd>
           </div>
+          {submission.reviewedAt ? (
+            <div className="grid gap-1 py-3 sm:grid-cols-[9rem_1fr] sm:gap-4">
+              <dt className="font-medium text-foreground">Reviewed</dt>
+              <dd className="text-subtle">{formatSubmissionDate(submission.reviewedAt)}</dd>
+            </div>
+          ) : null}
         </dl>
       </CardContent>
     </Card>

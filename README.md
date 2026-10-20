@@ -150,7 +150,8 @@ cp .env.test.example .env.test
 | `/` | Public | Landing / redirect |
 | `/signup` | Public | Student registration |
 | `/login` | Public | Student or mentor login |
-| `/student` | STUDENT | Student dashboard (submit + status) |
+| `/student` | STUDENT | Student dashboard (submit + status + timeline) |
+| `/student/profile` | STUDENT | Student profile (name, email, role, member since) |
 | `/mentor` | MENTOR | Review dashboard |
 
 ## API overview
@@ -164,9 +165,9 @@ Base URL: `http://localhost:4000` (or `NEXT_PUBLIC_API_URL`).
 | `POST` | `/api/auth/login` | No | Returns `{ user, token }` |
 | `GET` | `/api/auth/me` | Bearer | Current user profile |
 | `POST` | `/api/submissions` | Student | Create submission |
-| `GET` | `/api/submissions/me` | Student | Own submission, or `{ submission: null }` |
-| `GET` | `/api/submissions` | Mentor | List + `page`, `limit`, optional `status` |
-| `PATCH` | `/api/submissions/:id/status` | Mentor | `{ status: APPROVED \| REJECTED }` |
+| `GET` | `/api/submissions/me` | Student | Own submission (incl. `feedback`, `reviewedAt`), or `{ submission: null }` |
+| `GET` | `/api/submissions` | Mentor | List + `page`, `limit`, optional `status`, `q`, `sortBy=createdAt`, `sortOrder=asc\|desc` |
+| `PATCH` | `/api/submissions/:id/status` | Mentor | `{ status: APPROVED \| REJECTED, feedback?: string \| null }` |
 | `GET` | `/api/dashboard/stats` | Mentor | Aggregate counts |
 
 There is no Swagger/OpenAPI UI in this project.
@@ -182,6 +183,8 @@ Authorization: Bearer <jwt>
 - **Duplicate submissions:** one submission per student (`unique studentId`); second create returns `409`.
 - **Roles:** `STUDENT` and `MENTOR` (seeded mentor acts as admin/reviewer).
 - **Rate limit:** in-memory, 5 submission attempts / 15 minutes per authenticated student (process-local).
+- **Mentor feedback:** optional; empty/whitespace feedback is stored as `null`. Max 2000 characters. Saved atomically with status + `reviewedAt`.
+- **Timeline timestamps:** `createdAt` = submitted; `reviewedAt` = mentor decision time (null while `PENDING`).
 - **Token storage (frontend):** Bearer JWT in `localStorage` (XSS-sensitive). The backend does not issue HttpOnly session cookies; changing that would require an auth contract change.
 
 ## Troubleshooting
