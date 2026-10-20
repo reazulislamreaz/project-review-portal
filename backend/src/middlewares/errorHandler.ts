@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { isAppError } from "../utils/errors";
 
 export function errorHandler(
   err: unknown,
@@ -6,7 +7,14 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ): void {
-  const message = err instanceof Error ? err.message : "Internal server error";
+  if (isAppError(err)) {
+    res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+      ...(err.details !== undefined ? { errors: err.details } : {}),
+    });
+    return;
+  }
 
   if (process.env.NODE_ENV !== "production") {
     console.error(err);
@@ -14,6 +22,6 @@ export function errorHandler(
 
   res.status(500).json({
     success: false,
-    message,
+    message: "Internal server error",
   });
 }

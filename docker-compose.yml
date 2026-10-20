@@ -26,6 +26,11 @@ services:
       PORT: 4000
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/project_submission?schema=public}
+      JWT_SECRET: ${JWT_SECRET:-change-me-to-a-long-random-production-secret}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      MENTOR_SEED_NAME: ${MENTOR_SEED_NAME:-Mentor Admin}
+      MENTOR_SEED_EMAIL: ${MENTOR_SEED_EMAIL:-mentor@example.com}
+      MENTOR_SEED_PASSWORD: ${MENTOR_SEED_PASSWORD:-change-me-mentor-password}
     depends_on:
       postgres:
         condition: service_healthy
