@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { LoadingState } from "@/components/feedback/loading-state";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -8,14 +8,16 @@ import { homePathForRole } from "@/lib/auth/routes";
 import type { Role } from "@/lib/api/types";
 
 type RequireAuthProps = {
-  children: React.ReactNode;
+  children: ReactNode;
   role?: Role;
+  /** Shown inside a parent shell so the chrome does not unmount. */
+  fallback?: ReactNode;
 };
 
 /**
  * Client-side gate for UX only. Backend endpoints still enforce JWT + RBAC.
  */
-export function RequireAuth({ children, role }: RequireAuthProps) {
+export function RequireAuth({ children, role, fallback }: RequireAuthProps) {
   const router = useRouter();
   const { status, user } = useAuth();
 
@@ -30,16 +32,28 @@ export function RequireAuth({ children, role }: RequireAuthProps) {
     }
   }, [status, user, role, router]);
 
+  const defaultFallback = (
+    <LoadingState variant="panel" label="Checking your session..." />
+  );
+
   if (status === "loading") {
-    return <LoadingState label="Checking your session..." />;
+    return <>{fallback ?? defaultFallback}</>;
   }
 
   if (status !== "authenticated" || !user) {
-    return <LoadingState label="Redirecting to login..." />;
+    return (
+      <>
+        {fallback ?? (
+          <LoadingState variant="panel" label="Redirecting to login..." />
+        )}
+      </>
+    );
   }
 
   if (role && user.role !== role) {
-    return <LoadingState label="Redirecting..." />;
+    return (
+      <>{fallback ?? <LoadingState variant="panel" label="Redirecting..." />}</>
+    );
   }
 
   return <>{children}</>;

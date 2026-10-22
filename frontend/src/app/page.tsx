@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AuthShell } from "@/components/layout/auth-shell";
 import { LoadingState } from "@/components/feedback/loading-state";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -19,18 +20,33 @@ export default function HomePage() {
   }, [status, user, router]);
 
   if (status === "loading") {
-    return <LoadingState label="Loading..." />;
+    return (
+      <AuthShell>
+        <div className="flex min-h-[22rem] items-center justify-center rounded-lg border border-border bg-surface">
+          <LoadingState variant="panel" label="Loading..." />
+        </div>
+      </AuthShell>
+    );
   }
 
   if (status === "authenticated") {
-    return <LoadingState label="Redirecting..." />;
+    return (
+      <AuthShell>
+        <div className="flex min-h-[22rem] items-center justify-center rounded-lg border border-border bg-surface">
+          <LoadingState variant="panel" label="Redirecting..." />
+        </div>
+      </AuthShell>
+    );
   }
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center gap-8 px-4 py-16 sm:px-6">
       <div className="space-y-4">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+        <p className="text-sm font-medium text-muted-foreground">
           Project Submission Dashboard
+        </p>
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+          Submit projects. Review with clarity.
         </h1>
         <p className="text-base leading-relaxed text-subtle">
           Students submit project work for review. Mentors approve or reject submissions from

@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { AuthShell } from "@/components/layout/auth-shell";
 import { LoadingState } from "@/components/feedback/loading-state";
 import { useAuth } from "@/lib/auth/auth-context";
 import { homePathForRole } from "@/lib/auth/routes";
 
 type GuestOnlyProps = {
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 export function GuestOnly({ children }: GuestOnlyProps) {
@@ -21,11 +22,23 @@ export function GuestOnly({ children }: GuestOnlyProps) {
   }, [status, user, router]);
 
   if (status === "loading") {
-    return <LoadingState label="Checking your session..." />;
+    return (
+      <AuthShell>
+        <div className="flex min-h-[22rem] items-center justify-center rounded-lg border border-border bg-surface">
+          <LoadingState variant="panel" label="Checking your session..." />
+        </div>
+      </AuthShell>
+    );
   }
 
   if (status === "authenticated") {
-    return <LoadingState label="Redirecting..." />;
+    return (
+      <AuthShell>
+        <div className="flex min-h-[22rem] items-center justify-center rounded-lg border border-border bg-surface">
+          <LoadingState variant="panel" label="Redirecting..." />
+        </div>
+      </AuthShell>
+    );
   }
 
   return <>{children}</>;

@@ -388,14 +388,16 @@ export function MentorDashboard() {
 
       <div className="space-y-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <StatusFilterControl
-            value={filter}
-            onChange={handleFilterChange}
-            disabled={controlsLocked}
-            pendingCount={stats?.totalPending ?? null}
-          />
+          <div className="min-h-9">
+            <StatusFilterControl
+              value={filter}
+              onChange={handleFilterChange}
+              disabled={controlsLocked}
+              pendingCount={stats?.totalPending ?? null}
+            />
+          </div>
 
-          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-[minmax(0,20rem)_11rem] sm:items-end lg:w-auto">
+          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-[minmax(0,20rem)_11rem] sm:items-end lg:w-auto lg:shrink-0">
             <div className="space-y-2">
               <Label htmlFor="mentor-search">Search</Label>
               <Input
@@ -414,7 +416,7 @@ export function MentorDashboard() {
               <Label htmlFor="mentor-sort">Sort by date</Label>
               <select
                 id="mentor-sort"
-                className="flex h-10 w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-sm text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
                 value={sortOrder}
                 disabled={controlsLocked}
                 onChange={(event) => handleSortChange(event.target.value as SortOrder)}
@@ -426,12 +428,11 @@ export function MentorDashboard() {
           </div>
         </div>
 
-        {(actionMessage || actionError) && (
-          <div className="space-y-2" aria-live="polite">
-            {actionMessage ? <Alert variant="success">{actionMessage}</Alert> : null}
-            {actionError ? <Alert variant="error">{actionError}</Alert> : null}
-          </div>
-        )}
+        {/* Reserved height so success/error toasts do not shove the table down */}
+        <div className="min-h-[3.25rem]" aria-live="polite">
+          {actionMessage ? <Alert variant="success">{actionMessage}</Alert> : null}
+          {actionError ? <Alert variant="error">{actionError}</Alert> : null}
+        </div>
 
         <SubmissionsTable
           items={items}

@@ -1,12 +1,13 @@
 import { GuestOnly } from "@/components/auth/guest-only";
 import { SignupForm } from "@/components/auth/signup-form";
+import { AuthShell } from "@/components/layout/auth-shell";
 
 export default function SignupPage() {
   return (
     <GuestOnly>
-      <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12 sm:px-6">
+      <AuthShell>
         <SignupForm />
-      </main>
+      </AuthShell>
     </GuestOnly>
   );
 }

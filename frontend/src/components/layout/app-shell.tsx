@@ -6,19 +6,25 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/lib/auth/auth-context";
+import { homePathForRole } from "@/lib/auth/routes";
 import { cn } from "@/lib/utils";
+
+/** Shared shell width for student and mentor dashboards. */
+const SHELL_WIDTH = "max-w-7xl";
 
 type AppShellProps = {
   title: string;
   children: ReactNode;
+  /** @deprecated Kept for call-site compatibility; width is always shared. */
   wide?: boolean;
 };
 
-export function AppShell({ title, children, wide = false }: AppShellProps) {
+export function AppShell({ title, children }: AppShellProps) {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const widthClass = wide ? "max-w-7xl" : "max-w-3xl";
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+
+  const homeHref = user ? homePathForRole(user.role) : "/";
 
   function handleLogoutConfirm() {
     setLogoutConfirmOpen(false);
@@ -27,33 +33,39 @@ export function AppShell({ title, children, wide = false }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-surface">
+    <div className="flex min-h-screen flex-col bg-background">
+      <header className="sticky top-0 z-40 border-b border-border bg-surface">
         <div
           className={cn(
-            "mx-auto flex items-center justify-between gap-4 px-4 py-3.5 sm:px-6",
-            widthClass,
+            "mx-auto flex min-h-14 w-full items-center justify-between gap-3 px-4 py-2.5 sm:min-h-[3.75rem] sm:gap-4 sm:px-6",
+            SHELL_WIDTH,
           )}
         >
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <Link
-              href="/"
-              className="text-sm font-semibold text-foreground hover:text-primary-hover"
+              href={homeHref}
+              className="block truncate text-sm font-semibold text-foreground hover:text-primary-hover"
             >
               Project Submission Dashboard
             </Link>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{title}</p>
           </div>
           <div className="flex shrink-0 items-center gap-3">
-            {user ? (
-              <p className="hidden text-sm text-subtle sm:block">
-                {user.name}
-                <span className="text-muted-foreground">
-                  {" "}
-                  · {user.role === "MENTOR" ? "Mentor" : "Student"}
+            <p className="hidden max-w-[12rem] truncate text-sm text-subtle sm:block">
+              {user ? (
+                <>
+                  <span className="text-foreground">{user.name}</span>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    · {user.role === "MENTOR" ? "Mentor" : "Student"}
+                  </span>
+                </>
+              ) : (
+                <span className="invisible" aria-hidden="true">
+                  Loading · Student
                 </span>
-              </p>
-            ) : null}
+              )}
+            </p>
             <Button
               type="button"
               variant="outline"
@@ -65,7 +77,10 @@ export function AppShell({ title, children, wide = false }: AppShellProps) {
           </div>
         </div>
       </header>
-      <main className={cn("mx-auto px-4 py-8 sm:px-6 sm:py-10", widthClass)}>{children}</main>
+
+      <main className={cn("mx-auto w-full flex-1 px-4 py-8 sm:px-6 sm:py-10", SHELL_WIDTH)}>
+        {children}
+      </main>
 
       <ConfirmDialog
         open={logoutConfirmOpen}

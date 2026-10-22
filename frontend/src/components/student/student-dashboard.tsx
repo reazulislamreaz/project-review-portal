@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert } from "@/components/feedback/alert";
@@ -106,34 +105,26 @@ export function StudentDashboard() {
         : "Not submitted";
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <PageHeader
-          title={user ? `Welcome, ${user.name}` : "Welcome"}
-          description="Track your project submission and review status. Each student may submit only once."
-        />
-        <Link
-          href="/student/profile"
-          className="inline-flex h-9 shrink-0 items-center self-start rounded-md border border-border-strong bg-surface px-3 text-sm font-medium text-foreground hover:bg-muted"
-        >
-          View profile
-        </Link>
-      </div>
+    <div className="w-full min-w-0 space-y-8">
+      <PageHeader
+        title={user ? `Welcome, ${user.name}` : "Welcome"}
+        description="Track your project submission and review status. Each student may submit only once."
+      />
 
       <section aria-labelledby="overview-heading" className="space-y-3">
         <h2 id="overview-heading" className="text-sm font-medium text-foreground">
           Overview
         </h2>
         <div className="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2">
-          <div className="bg-surface px-4 py-4 sm:px-5">
+          <div className="min-w-0 bg-surface px-4 py-4 sm:px-5">
             <p className="text-xs font-medium text-muted-foreground">Submission status</p>
-            <p className="mt-1.5 text-lg font-semibold tracking-tight text-foreground">
+            <p className="mt-1.5 truncate text-lg font-semibold tracking-tight text-foreground">
               {overviewLabel}
             </p>
           </div>
-          <div className="bg-surface px-4 py-4 sm:px-5">
+          <div className="min-w-0 bg-surface px-4 py-4 sm:px-5">
             <p className="text-xs font-medium text-muted-foreground">Last updated</p>
-            <p className="mt-1.5 text-lg font-semibold tracking-tight text-foreground">
+            <p className="mt-1.5 truncate text-lg font-semibold tracking-tight text-foreground">
               {loading || error || !submission
                 ? "—"
                 : formatSubmissionDate(submission.updatedAt)}
@@ -142,48 +133,50 @@ export function StudentDashboard() {
         </div>
       </section>
 
-      {error ? (
-        <div className="space-y-3">
-          <Alert variant="error">{error}</Alert>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => void refreshSubmission()}
-          >
-            Try again
-          </Button>
-        </div>
-      ) : null}
-
-      {loading ? <CardSkeleton /> : null}
-
-      {!loading && !error && justSubmitted && submission ? (
-        <Alert variant="success" title="Submission received">
-          Your project was submitted successfully and is now pending mentor review.
-        </Alert>
-      ) : null}
-
-      {!loading && !error && submission ? (
-        <div className="space-y-6">
-          <StatusTimeline submission={submission} />
-          <SubmissionDetails submission={submission} />
-        </div>
-      ) : null}
-
-      {!loading && !error && !submission ? (
-        <section aria-labelledby="submit-heading" className="space-y-4">
-          <div className="space-y-1">
-            <h2 id="submit-heading" className="text-sm font-medium text-foreground">
-              Submit your project
-            </h2>
-            <p className="text-sm text-subtle">
-              You have not submitted a project yet. Provide your project details below.
-            </p>
+      <div className="min-h-[16rem] min-w-0 space-y-6">
+        {error ? (
+          <div className="space-y-3">
+            <Alert variant="error">{error}</Alert>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void refreshSubmission()}
+            >
+              Try again
+            </Button>
           </div>
-          <SubmissionForm onSuccess={handleSubmitSuccess} />
-        </section>
-      ) : null}
+        ) : null}
+
+        {loading ? <CardSkeleton /> : null}
+
+        {!loading && !error && justSubmitted && submission ? (
+          <Alert variant="success" title="Submission received">
+            Your project was submitted successfully and is now pending mentor review.
+          </Alert>
+        ) : null}
+
+        {!loading && !error && submission ? (
+          <div className="space-y-6">
+            <StatusTimeline submission={submission} />
+            <SubmissionDetails submission={submission} />
+          </div>
+        ) : null}
+
+        {!loading && !error && !submission ? (
+          <section aria-labelledby="submit-heading" className="space-y-4">
+            <div className="space-y-1">
+              <h2 id="submit-heading" className="text-sm font-medium text-foreground">
+                Submit your project
+              </h2>
+              <p className="text-sm text-subtle">
+                You have not submitted a project yet. Provide your project details below.
+              </p>
+            </div>
+            <SubmissionForm onSuccess={handleSubmitSuccess} />
+          </section>
+        ) : null}
+      </div>
     </div>
   );
 }

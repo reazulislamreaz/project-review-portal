@@ -70,7 +70,7 @@ export function SignupForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle as="h1">Create student account</CardTitle>
         <CardDescription>

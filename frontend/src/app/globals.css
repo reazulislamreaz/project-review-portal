@@ -42,6 +42,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/*
+  Keep layout width stable when page height changes (e.g. student
+  dashboard vs shorter profile). Without this, the scrollbar toggles
+  and centered max-width content shifts sideways.
+*/
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -58,6 +67,26 @@ a[href] {
 :focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
+}
+
+/* Soft page enter — only inside portal shells; respect reduced motion */
+@keyframes page-content-in {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.page-content {
+  animation: page-content-in 160ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-content {
+    animation: none;
+  }
 }
 
 /* Native dialog: center the panel; backdrop dims the page */

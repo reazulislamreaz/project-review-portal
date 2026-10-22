@@ -69,7 +69,7 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle as="h1">Log in</CardTitle>
         <CardDescription>Use your student or mentor credentials to continue.</CardDescription>

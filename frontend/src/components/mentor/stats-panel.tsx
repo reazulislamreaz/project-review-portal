@@ -26,7 +26,7 @@ export function StatsPanel({ stats, loading, error }: StatsPanelProps) {
       {items.map((item) => (
         <div
           key={item.key}
-          className="rounded-lg border border-border bg-surface px-4 py-4 sm:px-5"
+          className="rounded-lg border border-border bg-surface px-4 py-4 sm:min-h-[5.5rem] sm:px-5"
         >
           <p className="text-xs font-medium uppercase tracking-wide text-subtle">
             {item.label}
