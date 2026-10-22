@@ -1,21 +1,30 @@
 # Project Submission and Review Dashboard
 
-Full-stack monorepo for the Associate Web Instructor hiring assignment (Part 1 — application).
+## Overview
+
+Students sign up, submit a project, and track review status. Mentors review submissions, approve or reject them with feedback, and view stats. Students can resubmit after rejection.
 
 | Path | Stack |
 |------|--------|
 | `backend/` | Express.js, TypeScript, Prisma, PostgreSQL, JWT RBAC |
-| `frontend/` | Next.js App Router, TypeScript, Tailwind CSS, shadcn-style UI |
+| `frontend/` | Next.js App Router, TypeScript, Tailwind CSS |
 
-Part 2 teaching videos are separate deliverables and are not included in this repository.
+## Live demo
+
+- **Frontend:** https://task.elevateapparel.com.bd
+- **API:** https://taskapi.elevateapparel.com.bd
+- **API health:** https://taskapi.elevateapparel.com.bd/api/health
+
+Demo mentor (seeded): use the **Demo mentor login** button on the login page, or sign in with the mentor email/password from your `.env` seed values.
 
 ## Prerequisites
 
-- Node.js 18+ (20 recommended)
-- npm
+- Node.js 18+ (20 recommended) and npm
 - Docker and Docker Compose (recommended), **or** a local PostgreSQL 16 instance
 
-## Quick start (Docker)
+## Project setup
+
+### Option A — Docker (recommended)
 
 ```bash
 git clone <repository-url>
@@ -23,27 +32,24 @@ cd <project-directory>
 cp .env.example .env
 ```
 
-Edit `.env` and set at least:
+Edit `.env` and set:
 
-- `JWT_SECRET` — long random string, **32+ characters** (required; Compose will not start without it)
-- `MENTOR_SEED_PASSWORD` — strong password for the seeded mentor account (recommended)
+1. `JWT_SECRET` — random string, **32+ characters** (required)
+2. `MENTOR_SEED_PASSWORD` — password for the seeded mentor account
+3. Leave local defaults for ports and URLs, or change them for your host
 
-Then:
+Then build and start:
 
 ```bash
 docker compose up --build
 ```
 
-On backend startup the container:
+On startup the backend applies migrations, seeds the mentor (when seed vars are set), and starts the API.
 
-1. Applies Prisma migrations (`prisma migrate deploy`)
-2. Seeds the mentor account when `MENTOR_SEED_NAME`, `MENTOR_SEED_EMAIL`, and `MENTOR_SEED_PASSWORD` are all set
-3. Starts the API
-
-Open:
-
-- Frontend: http://localhost:3000
-- Backend health: http://localhost:4000/api/health
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| Backend health | http://localhost:4000/api/health |
 
 Stop:
 
@@ -51,24 +57,22 @@ Stop:
 docker compose down
 ```
 
-## Local development (without full Compose app stack)
+### Option B — Local development
 
-### 1. Database
-
-Start PostgreSQL only (example):
+**1. Database**
 
 ```bash
 docker compose up -d postgres
 ```
 
-Or point `DATABASE_URL` at any local Postgres database.
+Or set `DATABASE_URL` to any local Postgres database.
 
-### 2. Backend
+**2. Backend**
 
 ```bash
 cd backend
 cp .env.example .env
-# Edit DATABASE_URL, JWT_SECRET, and mentor seed values
+# Set DATABASE_URL, JWT_SECRET, MENTOR_SEED_*
 npm install
 npm run prisma:generate
 npm run prisma:migrate
@@ -78,12 +82,12 @@ npm run dev
 
 API: http://localhost:4000
 
-### 3. Frontend
+**3. Frontend**
 
 ```bash
 cd frontend
 cp .env.example .env.local
-# NEXT_PUBLIC_API_URL=http://localhost:4000
+# Ensure NEXT_PUBLIC_API_URL=http://localhost:4000
 npm install
 npm run dev
 ```
@@ -96,19 +100,19 @@ App: http://localhost:3000
 
 | Variable | Required | Purpose |
 |----------|----------|---------|
-| `JWT_SECRET` | Yes | Signing key for JWTs (32+ chars in production) |
-| `JWT_EXPIRES_IN` | No | Access token lifetime (default `24h`) |
+| `JWT_SECRET` | Yes | JWT signing key (32+ chars in production) |
+| `JWT_EXPIRES_IN` | No | Token lifetime (default `24h`) |
 | `MENTOR_SEED_NAME` | For seed | Seeded mentor display name |
 | `MENTOR_SEED_EMAIL` | For seed | Seeded mentor email |
 | `MENTOR_SEED_PASSWORD` | For seed | Seeded mentor password |
-| `DATABASE_URL` | Yes (Compose) | Postgres URL used by the backend container |
-| `NEXT_PUBLIC_API_URL` | No | Browser API base URL baked into the frontend image |
-| `CORS_ORIGIN` | No | Allowed browser origin for the API |
+| `DATABASE_URL` | Yes (Compose) | Postgres URL for the backend container |
+| `NEXT_PUBLIC_API_URL` | No | Browser API base URL (baked into frontend image) |
+| `CORS_ORIGIN` | No | Allowed browser origin (must match the frontend URL) |
 | `FRONTEND_PORT` / `BACKEND_PORT` / `POSTGRES_*` | No | Host ports and DB defaults |
 
 Never commit real secrets. `.env`, `backend/.env`, and `frontend/.env.local` are gitignored.
 
-Frontend public env may only include `NEXT_PUBLIC_API_URL`. Do **not** put `JWT_SECRET` in frontend env.
+Do **not** put `JWT_SECRET` in frontend env — only `NEXT_PUBLIC_API_URL`.
 
 ### Backend test env
 
@@ -117,7 +121,7 @@ cd backend
 cp .env.test.example .env.test
 ```
 
-`DATABASE_URL` for tests **must** use a database name ending in `_test`. Tests refuse other databases.
+`DATABASE_URL` for tests **must** end with `_test`.
 
 ## Useful commands
 
@@ -150,11 +154,11 @@ cp .env.test.example .env.test
 | `/` | Public | Landing / redirect |
 | `/signup` | Public | Student registration |
 | `/login` | Public | Student or mentor login |
-| `/student` | STUDENT | Student dashboard (submit + status + timeline) |
-| `/student/profile` | STUDENT | View/update own profile (email read-only) |
-| `/mentor` | MENTOR | Review dashboard (incl. Needs review queue) |
-| `/mentor/submissions/[id]` | MENTOR | Submission detail / review page |
-| `/mentor/profile` | MENTOR | View/update own profile (email read-only) |
+| `/student` | STUDENT | Dashboard (submit, status, timeline) |
+| `/student/profile` | STUDENT | Profile (email read-only) |
+| `/mentor` | MENTOR | Review dashboard |
+| `/mentor/submissions/[id]` | MENTOR | Submission detail / review |
+| `/mentor/profile` | MENTOR | Profile (email read-only) |
 
 ## API overview
 
@@ -165,47 +169,38 @@ Base URL: `http://localhost:4000` (or `NEXT_PUBLIC_API_URL`).
 | `GET` | `/api/health` | No | Liveness |
 | `POST` | `/api/auth/signup` | No | Student signup |
 | `POST` | `/api/auth/login` | No | Returns `{ user, token }` |
+| `POST` | `/api/auth/demo-mentor` | No | Demo mentor login (server-side seed creds) |
 | `GET` | `/api/auth/me` | Bearer | Current user profile |
-| `PATCH` | `/api/auth/me` | Bearer | Update own profile (`name` only; email cannot be changed) |
-| `POST` | `/api/submissions` | Student | Create submission (`PENDING`; locked until reviewed) |
-| `GET` | `/api/submissions/me` | Student | Own submission (incl. feedback history), or `{ submission: null }` |
-| `PATCH` | `/api/submissions/me` | Student | Resubmit a `REJECTED` submission in place → `PENDING` |
-| `GET` | `/api/submissions` | Mentor | List + `page`, `limit`, optional `status`, `q`, `sortBy=createdAt`, `sortOrder=asc\|desc` |
-| `GET` | `/api/submissions/:id` | Mentor | Single submission detail (with student) |
-| `PATCH` | `/api/submissions/:id/status` | Mentor | `{ status: APPROVED \| REJECTED, feedback?: string \| null }` |
+| `PATCH` | `/api/auth/me` | Bearer | Update own profile (`name` only) |
+| `POST` | `/api/submissions` | Student | Create submission (`PENDING`) |
+| `GET` | `/api/submissions/me` | Student | Own submission, or `{ submission: null }` |
+| `PATCH` | `/api/submissions/me` | Student | Resubmit after `REJECTED` → `PENDING` |
+| `GET` | `/api/submissions` | Mentor | List + filters/pagination |
+| `GET` | `/api/submissions/:id` | Mentor | Submission detail |
+| `PATCH` | `/api/submissions/:id/status` | Mentor | Approve / reject + optional feedback |
 | `GET` | `/api/dashboard/stats` | Mentor | Aggregate counts |
 
-There is no Swagger/OpenAPI UI in this project.
-
-Authenticated requests use:
+Authenticated requests:
 
 ```http
 Authorization: Bearer <jwt>
 ```
 
-## Design decisions (assignment ambiguities)
+## Design decisions
 
-- **Duplicate submissions:** one submission per student (`unique studentId`); second create returns `409`.
-- **Submission lifecycle:** `PENDING` and `APPROVED` are locked for students; `REJECTED` may be edited via `PATCH /api/submissions/me`, which updates the same row and returns status to `PENDING` while preserving prior rejection feedback in `previousFeedback`.
-- **Roles:** `STUDENT` and `MENTOR` (seeded mentor acts as admin/reviewer).
-- **Rate limit:** in-memory, 5 submission attempts / 15 minutes per authenticated student (process-local).
-- **Mentor feedback:** optional; empty/whitespace feedback is stored as `null`. Max 2000 characters. Saved atomically with status + `reviewedAt`.
-- **Timeline timestamps:** `createdAt` = submitted; `reviewedAt` = mentor decision time (null while `PENDING`).
-- **Token storage (frontend):** Bearer JWT in `localStorage` (XSS-sensitive). The backend does not issue HttpOnly session cookies; changing that would require an auth contract change.
+- **One submission per student** (`unique studentId`); second create returns `409`.
+- **Lifecycle:** `PENDING` / `APPROVED` locked for students; `REJECTED` can be updated via `PATCH /api/submissions/me` (status back to `PENDING`; prior feedback kept in `previousFeedback`).
+- **Roles:** `STUDENT` and `MENTOR`.
+- **Rate limit:** 5 submission attempts / 15 minutes per student (in-memory).
+- **Mentor feedback:** optional, max 2000 chars; empty stored as `null`.
+- **Frontend auth:** JWT in `localStorage`.
 
 ## Troubleshooting
 
 - **Compose exits on JWT_SECRET:** set a non-empty `JWT_SECRET` in root `.env`.
-- **Production JWT_SECRET rejected:** must be ≥32 characters and must not look like a placeholder (`change-me`, `replace-with`, etc.).
-- **Frontend cannot reach API:** check `NEXT_PUBLIC_API_URL`, then rebuild frontend (`docker compose up --build`).
-- **Empty mentor login:** ensure seed variables are set and the backend container logged a successful seed.
-- **Test DB refused:** configure `backend/.env.test` so `DATABASE_URL` ends with `_test`.
+- **Production JWT_SECRET rejected:** must be ≥32 characters and not a placeholder.
+- **Frontend cannot reach API:** check `NEXT_PUBLIC_API_URL`, then rebuild (`docker compose up --build`).
+- **CORS / blocked requests:** set `CORS_ORIGIN` to the exact frontend origin (scheme + host + port), then recreate the backend container.
+- **Empty mentor login:** ensure seed variables are set and the backend logged a successful seed.
+- **Test DB refused:** `DATABASE_URL` in `backend/.env.test` must end with `_test`.
 - **Port in use:** change `FRONTEND_PORT` / `BACKEND_PORT` / `POSTGRES_PORT` in `.env`.
-
-## Submission checklist (assignment)
-
-1. Make the GitHub repository **public** after the submission deadline (per the PDF).
-2. Ensure the README and `.env.example` files are enough to run the app.
-3. Submit the repository link (and Part 2 video links separately).
-
-This audit does not create or claim completion of Part 2 videos.
