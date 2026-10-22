@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { login, me, signup, updateProfile } from "../controllers/authController";
+import {
+  demoMentorLogin,
+  login,
+  me,
+  signup,
+  updateProfile,
+} from "../controllers/authController";
 import { authenticate } from "../middlewares/authenticate";
 import { authorize } from "../middlewares/authorize";
 
@@ -7,6 +13,7 @@ const router = Router();
 
 router.post("/signup", signup);
 router.post("/login", login);
+router.post("/demo-mentor", demoMentorLogin);
 router.get("/me", authenticate, me);
 router.patch("/me", authenticate, updateProfile);
 

@@ -18,12 +18,15 @@ type FieldErrors = Partial<Record<"email" | "password", string>>;
 
 export function LoginForm() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, loginAsDemoMentor } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [demoSubmitting, setDemoSubmitting] = useState(false);
+
+  const busy = submitting || demoSubmitting;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -68,6 +71,25 @@ export function LoginForm() {
     }
   }
 
+  async function handleDemoMentorLogin() {
+    setFormError(null);
+    setFieldErrors({});
+    setDemoSubmitting(true);
+
+    try {
+      const user = await loginAsDemoMentor();
+      router.replace(homePathForRole(user.role));
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setFormError(error.message);
+      } else {
+        setFormError("Unable to start the demo mentor session. Please try again.");
+      }
+    } finally {
+      setDemoSubmitting(false);
+    }
+  }
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -89,7 +111,7 @@ export function LoginForm() {
               onChange={(event) => setEmail(event.target.value)}
               aria-invalid={Boolean(fieldErrors.email)}
               aria-describedby={fieldErrors.email ? "email-error" : undefined}
-              disabled={submitting}
+              disabled={busy}
             />
             <FieldError id="email-error" message={fieldErrors.email} />
           </div>
@@ -105,15 +127,37 @@ export function LoginForm() {
               onChange={(event) => setPassword(event.target.value)}
               aria-invalid={Boolean(fieldErrors.password)}
               aria-describedby={fieldErrors.password ? "password-error" : undefined}
-              disabled={submitting}
+              disabled={busy}
             />
             <FieldError id="password-error" message={fieldErrors.password} />
           </div>
 
-          <Button type="submit" className="w-full" disabled={submitting}>
+          <Button type="submit" className="w-full" disabled={busy}>
             {submitting ? "Signing in..." : "Log in"}
           </Button>
         </form>
+
+        <div className="relative my-5">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-surface px-2 text-muted-foreground">or</span>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          disabled={busy}
+          onClick={() => void handleDemoMentorLogin()}
+        >
+          {demoSubmitting ? "Opening mentor demo..." : "Login as demo mentor"}
+        </Button>
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          Instantly opens the seeded mentor account for reviewing submissions.
+        </p>
 
         <p className="mt-5 text-center text-sm text-subtle">
           Need a student account?{" "}

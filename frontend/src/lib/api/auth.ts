@@ -26,6 +26,13 @@ export async function loginUser(payload: LoginPayload): Promise<AuthResult> {
   });
 }
 
+/** One-click demo mentor session (credentials stay on the server). */
+export async function loginDemoMentor(): Promise<AuthResult> {
+  return apiRequest<AuthResult>("/api/auth/demo-mentor", {
+    method: "POST",
+  });
+}
+
 export async function getCurrentUser(token: string): Promise<SafeUser> {
   const data = await apiRequest<{ user: SafeUser }>("/api/auth/me", {
     method: "GET",

@@ -11,6 +11,7 @@ import {
 } from "react";
 import {
   getCurrentUser,
+  loginDemoMentor,
   loginUser,
   signupStudent,
   updateCurrentUserProfile,
@@ -25,6 +26,7 @@ type AuthContextValue = {
   user: SafeUser | null;
   token: string | null;
   login: (email: string, password: string) => Promise<SafeUser>;
+  loginAsDemoMentor: () => Promise<SafeUser>;
   signup: (name: string, email: string, password: string) => Promise<SafeUser>;
   updateProfile: (name: string) => Promise<SafeUser>;
   logout: () => void;
@@ -105,6 +107,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [applyAuthResult],
   );
 
+  const loginAsDemoMentor = useCallback(async () => {
+    const result = await loginDemoMentor();
+    applyAuthResult(result);
+    return result.user;
+  }, [applyAuthResult]);
+
   const signup = useCallback(
     async (name: string, email: string, password: string) => {
       const result = await signupStudent({ name, email, password });
@@ -164,12 +172,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       token,
       login,
+      loginAsDemoMentor,
       signup,
       updateProfile,
       logout: clearAuth,
       refreshUser,
     }),
-    [status, user, token, login, signup, updateProfile, clearAuth, refreshUser],
+    [
+      status,
+      user,
+      token,
+      login,
+      loginAsDemoMentor,
+      signup,
+      updateProfile,
+      clearAuth,
+      refreshUser,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

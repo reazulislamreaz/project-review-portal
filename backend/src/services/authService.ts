@@ -1,4 +1,5 @@
 import { Prisma, type Role, type User } from "@prisma/client";
+import { env } from "../config/env";
 import { prisma } from "../lib/prisma";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { signAccessToken } from "../lib/jwt";
@@ -97,6 +98,30 @@ export async function getAuthenticatedUser(userId: string): Promise<SafeUser> {
   }
 
   return toSafeUser(user);
+}
+
+/**
+ * One-click demo mentor login for the public demo.
+ * Uses seeded mentor credentials from server env (password never sent to the browser).
+ */
+export async function loginDemoMentor(): Promise<AuthResult> {
+  const email = env.mentorSeedEmail?.trim();
+  const password = env.mentorSeedPassword;
+
+  if (!email || !password) {
+    throw new AppError(
+      "Demo mentor login is not configured. Set MENTOR_SEED_EMAIL and MENTOR_SEED_PASSWORD.",
+      503,
+    );
+  }
+
+  const result = await loginUser({ email, password });
+
+  if (result.user.role !== "MENTOR") {
+    throw new AppError("Demo mentor account is misconfigured", 500);
+  }
+
+  return result;
 }
 
 /** Updates the caller's own profile. Email is intentionally not accepted. */

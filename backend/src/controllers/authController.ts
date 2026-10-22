@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import {
   getAuthenticatedUser,
+  loginDemoMentor,
   loginUser,
   signupStudent,
   updateAuthenticatedUserProfile,
@@ -42,6 +43,24 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
     res.status(200).json({
       success: true,
       message: "Login successful",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function demoMentorLogin(
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const result = await loginDemoMentor();
+
+    res.status(200).json({
+      success: true,
+      message: "Demo mentor login successful",
       data: result,
     });
   } catch (error) {
