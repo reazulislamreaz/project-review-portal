@@ -44,4 +44,8 @@ export const createSubmissionSchema = z
   })
   .strict();
 
+/** Same fields as create — used when a rejected submission is corrected and resent. */
+export const resubmitSubmissionSchema = createSubmissionSchema;
+
 export type CreateSubmissionInput = z.infer<typeof createSubmissionSchema>;
+export type ResubmitSubmissionInput = z.infer<typeof resubmitSubmissionSchema>;

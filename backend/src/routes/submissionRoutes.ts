@@ -3,6 +3,7 @@ import {
   createSubmission,
   getMySubmission,
   listSubmissions,
+  resubmitSubmission,
   updateSubmissionStatus,
 } from "../controllers/submissionController";
 import { authenticate } from "../middlewares/authenticate";
@@ -21,6 +22,13 @@ router.post(
 
 // Student-owned submission — register before any /:id routes.
 router.get("/me", authenticate, authorize("STUDENT"), getMySubmission);
+router.patch(
+  "/me",
+  authenticate,
+  authorize("STUDENT"),
+  submissionRateLimit,
+  resubmitSubmission,
+);
 
 router.get("/", authenticate, authorize("MENTOR"), listSubmissions);
 

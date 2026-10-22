@@ -15,9 +15,11 @@ type TimelineStep = {
 function buildSteps(submission: SafeSubmission): TimelineStep[] {
   const submitted: TimelineStep = {
     id: "submitted",
-    title: "Project submitted",
-    description: "Your project details were received.",
-    timestamp: submission.createdAt,
+    title: submission.resubmittedAt ? "Project resubmitted" : "Project submitted",
+    description: submission.resubmittedAt
+      ? "Updated project details were sent for another review."
+      : "Your project details were received.",
+    timestamp: submission.resubmittedAt ?? submission.createdAt,
     state: "complete",
   };
 
@@ -27,7 +29,7 @@ function buildSteps(submission: SafeSubmission): TimelineStep[] {
       {
         id: "pending",
         title: "Pending review",
-        description: "Waiting for a mentor to review your submission.",
+        description: "Waiting for a mentor to review your submission. Editing is locked.",
         timestamp: null,
         state: "current",
       },
@@ -41,7 +43,25 @@ function buildSteps(submission: SafeSubmission): TimelineStep[] {
     ];
   }
 
-  const approved = submission.status === "APPROVED";
+  if (submission.status === "REJECTED") {
+    return [
+      submitted,
+      {
+        id: "pending",
+        title: "Pending review",
+        description: "Your submission was reviewed by a mentor.",
+        timestamp: null,
+        state: "complete",
+      },
+      {
+        id: "decision",
+        title: "Project rejected",
+        description: "Update your project and resubmit for another review.",
+        timestamp: submission.reviewedAt,
+        state: "current",
+      },
+    ];
+  }
 
   return [
     submitted,
@@ -54,10 +74,8 @@ function buildSteps(submission: SafeSubmission): TimelineStep[] {
     },
     {
       id: "decision",
-      title: approved ? "Project approved" : "Project rejected",
-      description: approved
-        ? "A mentor approved your project."
-        : "A mentor rejected your project.",
+      title: "Project approved",
+      description: "A mentor approved your project. This submission is final and locked.",
       timestamp: submission.reviewedAt,
       state: "complete",
     },

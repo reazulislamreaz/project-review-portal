@@ -3,6 +3,7 @@ import {
   createSubmissionForStudent,
   getSubmissionForStudent,
   listSubmissionsForMentor,
+  resubmitSubmissionForStudent,
   updateSubmissionStatusForMentor,
 } from "../services/submissionService";
 import { AppError } from "../utils/errors";
@@ -12,7 +13,10 @@ import {
   submissionIdParamSchema,
   updateSubmissionStatusSchema,
 } from "../validators/review";
-import { createSubmissionSchema } from "../validators/submission";
+import {
+  createSubmissionSchema,
+  resubmitSubmissionSchema,
+} from "../validators/submission";
 
 export async function createSubmission(
   req: Request,
@@ -56,6 +60,34 @@ export async function getMySubmission(
 
     res.status(200).json({
       success: true,
+      data: { submission },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function resubmitSubmission(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    if (!req.auth) {
+      throw new AppError("Authentication required", 401);
+    }
+
+    const parsed = resubmitSubmissionSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      throw new AppError("Validation failed", 400, formatZodError(parsed.error));
+    }
+
+    const submission = await resubmitSubmissionForStudent(req.auth.id, parsed.data);
+
+    res.status(200).json({
+      success: true,
+      message: "Submission updated and returned to pending review",
       data: { submission },
     });
   } catch (error) {

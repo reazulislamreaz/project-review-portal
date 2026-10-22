@@ -23,7 +23,9 @@ export type SafeSubmission = {
   description: string;
   status: SubmissionStatus;
   feedback: string | null;
+  previousFeedback: string | null;
   reviewedAt: string | null;
+  resubmittedAt: string | null;
   studentId: string;
   createdAt: string;
   updatedAt: string;

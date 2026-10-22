@@ -1,7 +1,10 @@
 import { Prisma, type Submission, type SubmissionStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../utils/errors";
-import type { CreateSubmissionInput } from "../validators/submission";
+import type {
+  CreateSubmissionInput,
+  ResubmitSubmissionInput,
+} from "../validators/submission";
 import type {
   ListSubmissionsQuery,
   UpdateSubmissionStatusInput,
@@ -22,7 +25,9 @@ export type SafeSubmission = {
   description: string;
   status: Submission["status"];
   feedback: string | null;
+  previousFeedback: string | null;
   reviewedAt: Date | null;
+  resubmittedAt: Date | null;
   studentId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -58,7 +63,9 @@ function toSafeSubmission(submission: Submission): SafeSubmission {
     description: submission.description,
     status: submission.status,
     feedback: submission.feedback,
+    previousFeedback: submission.previousFeedback,
     reviewedAt: submission.reviewedAt,
+    resubmittedAt: submission.resubmittedAt,
     studentId: submission.studentId,
     createdAt: submission.createdAt,
     updatedAt: submission.updatedAt,
@@ -88,6 +95,41 @@ function isStudentIdUniqueViolation(error: Prisma.PrismaClientKnownRequestError)
   return false;
 }
 
+function conflictErrorForStatus(status: SubmissionStatus): AppError {
+  switch (status) {
+    case "PENDING":
+      return new AppError(
+        "Your submission is pending mentor review and cannot be changed or resubmitted",
+        409,
+      );
+    case "APPROVED":
+      return new AppError(
+        "Your submission was approved and is locked. It cannot be edited or resubmitted",
+        409,
+      );
+    case "REJECTED":
+      return new AppError(
+        "Your submission was rejected. Update and resubmit it instead of creating a new submission",
+        409,
+      );
+    default:
+      return new AppError("You have already submitted a project", 409);
+  }
+}
+
+async function throwCreateConflictForStudent(studentId: string): Promise<never> {
+  const existing = await prisma.submission.findUnique({
+    where: { studentId },
+    select: { status: true },
+  });
+
+  if (!existing) {
+    throw new AppError("You have already submitted a project", 409);
+  }
+
+  throw conflictErrorForStatus(existing.status);
+}
+
 /**
  * Return the authenticated student's own submission, or null when none exists.
  * Looks up by JWT-derived studentId only — never by a client-supplied id.
@@ -104,7 +146,8 @@ export async function getSubmissionForStudent(
 
 /**
  * Create a project submission for the authenticated student.
- * Duplicate policy (B0 D1 / B2 unique studentId): one submission per student.
+ * Duplicate policy: one submission row per student (unique studentId).
+ * PENDING/APPROVED are locked; REJECTED must use resubmit instead.
  */
 export async function createSubmissionForStudent(
   studentId: string,
@@ -129,11 +172,85 @@ export async function createSubmissionForStudent(
       error.code === "P2002" &&
       isStudentIdUniqueViolation(error)
     ) {
-      throw new AppError("You have already submitted a project", 409);
+      await throwCreateConflictForStudent(studentId);
     }
 
     throw error;
   }
+}
+
+/**
+ * Update a REJECTED submission in place and return it to PENDING.
+ * Concurrent-safe: updateMany only matches status REJECTED for this student.
+ */
+export async function resubmitSubmissionForStudent(
+  studentId: string,
+  input: ResubmitSubmissionInput,
+): Promise<SafeSubmission> {
+  const existing = await prisma.submission.findUnique({
+    where: { studentId },
+  });
+
+  if (!existing) {
+    throw new AppError("No submission found to resubmit", 404);
+  }
+
+  if (existing.status === "PENDING") {
+    throw conflictErrorForStatus("PENDING");
+  }
+
+  if (existing.status === "APPROVED") {
+    throw conflictErrorForStatus("APPROVED");
+  }
+
+  if (existing.status !== "REJECTED") {
+    throw new AppError("Only rejected submissions can be resubmitted", 409);
+  }
+
+  const previousFeedback = existing.feedback ?? existing.previousFeedback;
+  const resubmittedAt = new Date();
+
+  const updated = await prisma.submission.updateMany({
+    where: {
+      studentId,
+      status: "REJECTED",
+    },
+    data: {
+      projectName: input.projectName,
+      repoUrl: input.repoUrl,
+      liveUrl: input.liveUrl,
+      description: input.description,
+      status: "PENDING",
+      previousFeedback,
+      feedback: null,
+      reviewedAt: null,
+      resubmittedAt,
+    },
+  });
+
+  if (updated.count !== 1) {
+    // Status changed concurrently (e.g. mentor action) — re-check.
+    const current = await prisma.submission.findUnique({
+      where: { studentId },
+      select: { status: true },
+    });
+
+    if (!current) {
+      throw new AppError("No submission found to resubmit", 404);
+    }
+
+    throw conflictErrorForStatus(current.status);
+  }
+
+  const submission = await prisma.submission.findUnique({
+    where: { studentId },
+  });
+
+  if (!submission) {
+    throw new AppError("No submission found to resubmit", 404);
+  }
+
+  return toSafeSubmission(submission);
 }
 
 /**

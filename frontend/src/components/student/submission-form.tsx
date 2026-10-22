@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert } from "@/components/feedback/alert";
 import { FieldError } from "@/components/feedback/field-error";
@@ -9,13 +9,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createSubmission } from "@/lib/api/submissions";
+import { createSubmission, resubmitSubmission } from "@/lib/api/submissions";
 import { ApiError, type SafeSubmission } from "@/lib/api/types";
 import { useAuth } from "@/lib/auth/auth-context";
 import { createSubmissionFormSchema } from "@/lib/validation/submission";
 
 type FieldKey = "projectName" | "repoUrl" | "liveUrl" | "description";
 type FieldErrors = Partial<Record<FieldKey, string>>;
+
+type SubmissionFormMode = "create" | "resubmit";
+
+type InitialValues = {
+  projectName: string;
+  repoUrl: string;
+  liveUrl: string;
+  description: string;
+};
 
 function mapApiFieldErrors(fieldErrors: ApiError["fieldErrors"]): FieldErrors {
   const next: FieldErrors = {};
@@ -32,7 +41,7 @@ function mapApiFieldErrors(fieldErrors: ApiError["fieldErrors"]): FieldErrors {
   return next;
 }
 
-function messageForApiError(error: ApiError): string {
+function messageForApiError(error: ApiError, mode: SubmissionFormMode): string {
   switch (error.status) {
     case 400:
       return error.message || "Please fix the highlighted fields and try again.";
@@ -40,10 +49,14 @@ function messageForApiError(error: ApiError): string {
       return "Your session has expired. Please log in again.";
     case 403:
       return "You do not have permission to submit a project. Only student accounts can submit.";
+    case 404:
+      return error.message || "No submission found to resubmit.";
     case 409:
       return (
         error.message ||
-        "You have already submitted a project. Each student may submit only once."
+        (mode === "resubmit"
+          ? "This submission cannot be resubmitted in its current state."
+          : "You have already submitted a project.")
       );
     case 429:
       return (
@@ -53,25 +66,46 @@ function messageForApiError(error: ApiError): string {
     case 0:
       return error.message;
     default:
-      return error.message || "Unable to submit your project. Please try again.";
+      return (
+        error.message ||
+        (mode === "resubmit"
+          ? "Unable to resubmit your project. Please try again."
+          : "Unable to submit your project. Please try again.")
+      );
   }
 }
 
 type SubmissionFormProps = {
+  mode?: SubmissionFormMode;
+  initialValues?: InitialValues;
   onSuccess: (submission: SafeSubmission) => void;
 };
 
-export function SubmissionForm({ onSuccess }: SubmissionFormProps) {
+export function SubmissionForm({
+  mode = "create",
+  initialValues,
+  onSuccess,
+}: SubmissionFormProps) {
   const router = useRouter();
   const { token, logout } = useAuth();
 
-  const [projectName, setProjectName] = useState("");
-  const [repoUrl, setRepoUrl] = useState("");
-  const [liveUrl, setLiveUrl] = useState("");
-  const [description, setDescription] = useState("");
+  const [projectName, setProjectName] = useState(initialValues?.projectName ?? "");
+  const [repoUrl, setRepoUrl] = useState(initialValues?.repoUrl ?? "");
+  const [liveUrl, setLiveUrl] = useState(initialValues?.liveUrl ?? "");
+  const [description, setDescription] = useState(initialValues?.description ?? "");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!initialValues) {
+      return;
+    }
+    setProjectName(initialValues.projectName);
+    setRepoUrl(initialValues.repoUrl);
+    setLiveUrl(initialValues.liveUrl);
+    setDescription(initialValues.description);
+  }, [initialValues]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -115,7 +149,10 @@ export function SubmissionForm({ onSuccess }: SubmissionFormProps) {
     setSubmitting(true);
 
     try {
-      const submission = await createSubmission(parsed.data, token);
+      const submission =
+        mode === "resubmit"
+          ? await resubmitSubmission(parsed.data, token)
+          : await createSubmission(parsed.data, token);
       onSuccess(submission);
     } catch (error) {
       if (error instanceof ApiError) {
@@ -129,21 +166,29 @@ export function SubmissionForm({ onSuccess }: SubmissionFormProps) {
           setFieldErrors(mapApiFieldErrors(error.fieldErrors));
         }
 
-        setFormError(messageForApiError(error));
+        setFormError(messageForApiError(error, mode));
       } else {
-        setFormError("Unable to submit your project. Please try again.");
+        setFormError(
+          mode === "resubmit"
+            ? "Unable to resubmit your project. Please try again."
+            : "Unable to submit your project. Please try again.",
+        );
       }
     } finally {
       setSubmitting(false);
     }
   }
 
+  const isResubmit = mode === "resubmit";
+
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Submit your project</CardTitle>
+        <CardTitle>{isResubmit ? "Edit and resubmit" : "Submit your project"}</CardTitle>
         <CardDescription>
-          Provide your project details below. Each student may submit only once.
+          {isResubmit
+            ? "Update your project details based on mentor feedback. Resubmitting replaces your existing submission and returns it to pending review."
+            : "Provide your project details below. While your submission is pending or approved, it cannot be changed."}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -216,7 +261,13 @@ export function SubmissionForm({ onSuccess }: SubmissionFormProps) {
           </div>
 
           <Button type="submit" className="w-full sm:w-auto" disabled={submitting}>
-            {submitting ? "Submitting..." : "Submit project"}
+            {submitting
+              ? isResubmit
+                ? "Resubmitting..."
+                : "Submitting..."
+              : isResubmit
+                ? "Resubmit for review"
+                : "Submit project"}
           </Button>
         </form>
       </CardContent>

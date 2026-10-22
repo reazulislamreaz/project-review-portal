@@ -13,16 +13,18 @@ type SubmissionDetailsProps = {
   submission: SafeSubmission;
 };
 
-function statusMessage(status: SafeSubmission["status"]): string {
-  switch (status) {
+function statusMessage(submission: SafeSubmission): string {
+  switch (submission.status) {
     case "PENDING":
-      return "Your submission is awaiting mentor review.";
+      return submission.resubmittedAt
+        ? "Your updated project was resubmitted and is awaiting mentor review. Editing is locked until a decision is made."
+        : "Your submission is awaiting mentor review. You cannot edit or resubmit while it is pending.";
     case "APPROVED":
-      return "Your project has been approved.";
+      return "Your project has been approved. This decision is final — the submission is locked and cannot be edited or resubmitted.";
     case "REJECTED":
-      return "Your project was rejected.";
+      return "Your project was rejected. Review the mentor feedback below, update your details, and resubmit for another review.";
     default:
-      return `Current status is ${status}.`;
+      return `Current status is ${submission.status}.`;
   }
 }
 
@@ -34,6 +36,11 @@ export function SubmissionDetails({ submission }: SubmissionDetailsProps) {
         ? "error"
         : "info";
 
+  const rejectionFeedback =
+    submission.status === "REJECTED"
+      ? submission.feedback
+      : submission.previousFeedback;
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -41,8 +48,11 @@ export function SubmissionDetails({ submission }: SubmissionDetailsProps) {
           <div className="space-y-1.5">
             <CardTitle>My project submission</CardTitle>
             <CardDescription>
-              Submitted {formatSubmissionDate(submission.createdAt)}. Each student may submit only
-              once.
+              Submitted {formatSubmissionDate(submission.createdAt)}
+              {submission.resubmittedAt
+                ? ` · Last resubmitted ${formatSubmissionDate(submission.resubmittedAt)}`
+                : null}
+              .
             </CardDescription>
           </div>
           <span
@@ -55,10 +65,22 @@ export function SubmissionDetails({ submission }: SubmissionDetailsProps) {
       </CardHeader>
       <CardContent className="space-y-5">
         <Alert variant={alertVariant} title={`Status: ${statusLabel(submission.status)}`}>
-          {statusMessage(submission.status)}
+          {statusMessage(submission)}
         </Alert>
 
-        {submission.feedback ? (
+        {submission.status === "REJECTED" && submission.feedback ? (
+          <Alert variant="error" title="Mentor feedback — please address before resubmitting">
+            {submission.feedback}
+          </Alert>
+        ) : null}
+
+        {submission.status === "PENDING" && rejectionFeedback ? (
+          <Alert variant="info" title="Previous mentor feedback">
+            {rejectionFeedback}
+          </Alert>
+        ) : null}
+
+        {submission.status === "APPROVED" && submission.feedback ? (
           <Alert variant="info" title="Mentor feedback">
             {submission.feedback}
           </Alert>
@@ -105,7 +127,7 @@ export function SubmissionDetails({ submission }: SubmissionDetailsProps) {
               <div>{formatSubmissionDate(submission.createdAt)}</div>
               {submission.status === "PENDING" ? (
                 <div className="mt-0.5 text-xs text-muted-foreground">
-                  {formatWaitingDuration(submission.createdAt)}
+                  {formatWaitingDuration(submission.resubmittedAt ?? submission.createdAt)}
                 </div>
               ) : null}
             </dd>

@@ -198,7 +198,7 @@ describe("B4 student submissions", () => {
 
     expect(first.status).toBe(201);
     expect(second.status).toBe(409);
-    expect(second.body.message).toMatch(/already submitted/i);
+    expect(second.body.message).toMatch(/pending mentor review/i);
 
     const count = await prisma.submission.count({ where: { studentId: userId } });
     expect(count).toBe(1);
@@ -246,7 +246,7 @@ describe("B4 student submissions", () => {
 
     expect(created.status).toBe(201);
     expect(duplicate.status).toBe(409);
-    expect(duplicate.body.message).toBe("You have already submitted a project");
+    expect(duplicate.body.message).toMatch(/pending mentor review/i);
 
     for (const body of [created.body, duplicate.body]) {
       expect(JSON.stringify(body)).not.toMatch(/passwordHash/i);

@@ -43,8 +43,12 @@ model Submission {
   status      SubmissionStatus @default(PENDING)
   /// Optional mentor feedback set when approving or rejecting.
   feedback    String?
-  /// Set once when a mentor approves or rejects (null while PENDING).
+  /// Last rejection feedback retained after a student resubmits (minimal history).
+  previousFeedback String?
+  /// Set when a mentor approves or rejects (cleared on student resubmit).
   reviewedAt  DateTime?
+  /// Set when a rejected submission is resubmitted for review.
+  resubmittedAt DateTime?
   studentId   String           @unique
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt

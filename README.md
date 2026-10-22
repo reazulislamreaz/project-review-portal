@@ -166,8 +166,9 @@ Base URL: `http://localhost:4000` (or `NEXT_PUBLIC_API_URL`).
 | `POST` | `/api/auth/login` | No | Returns `{ user, token }` |
 | `GET` | `/api/auth/me` | Bearer | Current user profile |
 | `PATCH` | `/api/auth/me` | Bearer | Update own profile (`name` only; email cannot be changed) |
-| `POST` | `/api/submissions` | Student | Create submission |
-| `GET` | `/api/submissions/me` | Student | Own submission (incl. `feedback`, `reviewedAt`), or `{ submission: null }` |
+| `POST` | `/api/submissions` | Student | Create submission (`PENDING`; locked until reviewed) |
+| `GET` | `/api/submissions/me` | Student | Own submission (incl. feedback history), or `{ submission: null }` |
+| `PATCH` | `/api/submissions/me` | Student | Resubmit a `REJECTED` submission in place → `PENDING` |
 | `GET` | `/api/submissions` | Mentor | List + `page`, `limit`, optional `status`, `q`, `sortBy=createdAt`, `sortOrder=asc\|desc` |
 | `PATCH` | `/api/submissions/:id/status` | Mentor | `{ status: APPROVED \| REJECTED, feedback?: string \| null }` |
 | `GET` | `/api/dashboard/stats` | Mentor | Aggregate counts |
@@ -183,6 +184,7 @@ Authorization: Bearer <jwt>
 ## Design decisions (assignment ambiguities)
 
 - **Duplicate submissions:** one submission per student (`unique studentId`); second create returns `409`.
+- **Submission lifecycle:** `PENDING` and `APPROVED` are locked for students; `REJECTED` may be edited via `PATCH /api/submissions/me`, which updates the same row and returns status to `PENDING` while preserving prior rejection feedback in `previousFeedback`.
 - **Roles:** `STUDENT` and `MENTOR` (seeded mentor acts as admin/reviewer).
 - **Rate limit:** in-memory, 5 submission attempts / 15 minutes per authenticated student (process-local).
 - **Mentor feedback:** optional; empty/whitespace feedback is stored as `null`. Max 2000 characters. Saved atomically with status + `reviewedAt`.

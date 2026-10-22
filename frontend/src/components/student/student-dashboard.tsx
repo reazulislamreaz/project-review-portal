@@ -34,7 +34,11 @@ export function StudentDashboard() {
   const [submission, setSubmission] = useState<SafeSubmission | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [justSubmitted, setJustSubmitted] = useState(false);
+  const [banner, setBanner] = useState<{
+    variant: "success" | "info";
+    title: string;
+    message: string;
+  } | null>(null);
 
   const handleAuthFailure = useCallback(() => {
     logout();
@@ -90,10 +94,26 @@ export function StudentDashboard() {
     return () => controller.abort();
   }, [token, refreshSubmission]);
 
-  function handleSubmitSuccess(created: SafeSubmission) {
+  function handleCreateSuccess(created: SafeSubmission) {
     setSubmission(created);
-    setJustSubmitted(true);
     setError(null);
+    setBanner({
+      variant: "success",
+      title: "Submission received",
+      message:
+        "Your project was submitted successfully and is now pending mentor review. You cannot edit it until a decision is made.",
+    });
+  }
+
+  function handleResubmitSuccess(updated: SafeSubmission) {
+    setSubmission(updated);
+    setError(null);
+    setBanner({
+      variant: "success",
+      title: "Resubmitted for review",
+      message:
+        "Your updated project replaced the previous submission and is pending mentor review again.",
+    });
   }
 
   const overviewLabel = loading
@@ -108,7 +128,7 @@ export function StudentDashboard() {
     <div className="w-full min-w-0 space-y-8">
       <PageHeader
         title={user ? `Welcome, ${user.name}` : "Welcome"}
-        description="Track your project submission and review status. Each student may submit only once."
+        description="Track your project submission and review status. Pending and approved submissions are locked; rejected submissions can be corrected and resubmitted."
       />
 
       <section aria-labelledby="overview-heading" className="space-y-3">
@@ -150,9 +170,9 @@ export function StudentDashboard() {
 
         {loading ? <CardSkeleton /> : null}
 
-        {!loading && !error && justSubmitted && submission ? (
-          <Alert variant="success" title="Submission received">
-            Your project was submitted successfully and is now pending mentor review.
+        {!loading && !error && banner ? (
+          <Alert variant={banner.variant} title={banner.title}>
+            {banner.message}
           </Alert>
         ) : null}
 
@@ -160,6 +180,30 @@ export function StudentDashboard() {
           <div className="space-y-6">
             <StatusTimeline submission={submission} />
             <SubmissionDetails submission={submission} />
+
+            {submission.status === "REJECTED" ? (
+              <section aria-labelledby="resubmit-heading" className="space-y-4">
+                <div className="space-y-1">
+                  <h2 id="resubmit-heading" className="text-sm font-medium text-foreground">
+                    Correct and resubmit
+                  </h2>
+                  <p className="text-sm text-subtle">
+                    Address the mentor feedback, update your project details, then resubmit. This
+                    updates your existing submission — it does not create a duplicate.
+                  </p>
+                </div>
+                <SubmissionForm
+                  mode="resubmit"
+                  initialValues={{
+                    projectName: submission.projectName,
+                    repoUrl: submission.repoUrl,
+                    liveUrl: submission.liveUrl,
+                    description: submission.description,
+                  }}
+                  onSuccess={handleResubmitSuccess}
+                />
+              </section>
+            ) : null}
           </div>
         ) : null}
 
@@ -173,7 +217,7 @@ export function StudentDashboard() {
                 You have not submitted a project yet. Provide your project details below.
               </p>
             </div>
-            <SubmissionForm onSuccess={handleSubmitSuccess} />
+            <SubmissionForm onSuccess={handleCreateSuccess} />
           </section>
         ) : null}
       </div>

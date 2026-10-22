@@ -47,6 +47,20 @@ export async function getMySubmission(token: string): Promise<SafeSubmission | n
   return data.submission;
 }
 
+/** Update a REJECTED submission in place and return it to PENDING. */
+export async function resubmitSubmission(
+  payload: CreateSubmissionPayload,
+  token: string,
+): Promise<SafeSubmission> {
+  const data = await apiRequest<{ submission: SafeSubmission }>("/api/submissions/me", {
+    method: "PATCH",
+    body: payload,
+    token,
+  });
+
+  return data.submission;
+}
+
 export async function listSubmissionsForMentor(
   token: string,
   params: ListSubmissionsParams = {},
