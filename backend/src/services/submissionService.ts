@@ -144,6 +144,24 @@ export async function getSubmissionForStudent(
   return submission ? toSafeSubmission(submission) : null;
 }
 
+/** Mentor detail view for a single submission (includes student summary). */
+export async function getSubmissionForMentor(
+  submissionId: string,
+): Promise<MentorSubmissionView> {
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+    include: {
+      student: { select: studentSelect },
+    },
+  });
+
+  if (!submission) {
+    throw new AppError("Submission not found", 404);
+  }
+
+  return toMentorSubmissionView(submission);
+}
+
 /**
  * Create a project submission for the authenticated student.
  * Duplicate policy: one submission row per student (unique studentId).

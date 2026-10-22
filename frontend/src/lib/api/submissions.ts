@@ -61,6 +61,21 @@ export async function resubmitSubmission(
   return data.submission;
 }
 
+export async function getSubmissionForMentor(
+  submissionId: string,
+  token: string,
+): Promise<MentorSubmissionView> {
+  const data = await apiRequest<{ submission: MentorSubmissionView }>(
+    `/api/submissions/${encodeURIComponent(submissionId)}`,
+    {
+      method: "GET",
+      token,
+    },
+  );
+
+  return data.submission;
+}
+
 export async function listSubmissionsForMentor(
   token: string,
   params: ListSubmissionsParams = {},

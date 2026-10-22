@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createSubmission,
   getMySubmission,
+  getSubmissionById,
   listSubmissions,
   resubmitSubmission,
   updateSubmissionStatus,
@@ -31,6 +32,7 @@ router.patch(
 );
 
 router.get("/", authenticate, authorize("MENTOR"), listSubmissions);
+router.get("/:id", authenticate, authorize("MENTOR"), getSubmissionById);
 
 router.patch(
   "/:id/status",

@@ -153,6 +153,7 @@ cp .env.test.example .env.test
 | `/student` | STUDENT | Student dashboard (submit + status + timeline) |
 | `/student/profile` | STUDENT | View/update own profile (email read-only) |
 | `/mentor` | MENTOR | Review dashboard (incl. Needs review queue) |
+| `/mentor/submissions/[id]` | MENTOR | Submission detail / review page |
 | `/mentor/profile` | MENTOR | View/update own profile (email read-only) |
 
 ## API overview
@@ -170,6 +171,7 @@ Base URL: `http://localhost:4000` (or `NEXT_PUBLIC_API_URL`).
 | `GET` | `/api/submissions/me` | Student | Own submission (incl. feedback history), or `{ submission: null }` |
 | `PATCH` | `/api/submissions/me` | Student | Resubmit a `REJECTED` submission in place → `PENDING` |
 | `GET` | `/api/submissions` | Mentor | List + `page`, `limit`, optional `status`, `q`, `sortBy=createdAt`, `sortOrder=asc\|desc` |
+| `GET` | `/api/submissions/:id` | Mentor | Single submission detail (with student) |
 | `PATCH` | `/api/submissions/:id/status` | Mentor | `{ status: APPROVED \| REJECTED, feedback?: string \| null }` |
 | `GET` | `/api/dashboard/stats` | Mentor | Aggregate counts |
 

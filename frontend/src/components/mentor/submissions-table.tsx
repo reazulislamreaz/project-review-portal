@@ -1,6 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Link from "next/link";
+import { Eye } from "lucide-react";
 import { Alert } from "@/components/feedback/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +13,7 @@ import {
 import type { MentorSubmissionView, PaginationMeta, ReviewStatus } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
-const COLUMN_COUNT = 7;
+const COLUMN_COUNT = 8;
 /** Fixed row height so pending age text cannot stretch the table. */
 const ROW_HEIGHT_CLASS = "h-16";
 const ROW_HEIGHT_REM = 4;
@@ -156,13 +158,19 @@ export function SubmissionsTable({
               </th>
               <th
                 scope="col"
-                className="w-[14%] whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
+                className="w-[12%] whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
               >
                 Submitted
               </th>
               <th
                 scope="col"
-                className="w-[16%] whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
+                className="w-[6%] whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
+              >
+                Detail
+              </th>
+              <th
+                scope="col"
+                className="w-[14%] whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-subtle"
               >
                 Actions
               </th>
@@ -242,6 +250,16 @@ export function SubmissionsTable({
                         ) : (
                           <div className="mt-0.5 h-4" aria-hidden="true" />
                         )}
+                      </td>
+                      <td className="overflow-hidden px-4 py-2 align-middle">
+                        <Link
+                          href={`/mentor/submissions/${submission.id}`}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border-strong bg-surface text-foreground hover:bg-muted"
+                          aria-label={`View details for ${submission.projectName}`}
+                          title="View details"
+                        >
+                          <Eye className="h-4 w-4" aria-hidden="true" />
+                        </Link>
                       </td>
                       <td className="overflow-hidden px-4 py-2 align-middle">
                         {canReview ? (

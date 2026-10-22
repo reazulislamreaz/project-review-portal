@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import {
   createSubmissionForStudent,
+  getSubmissionForMentor,
   getSubmissionForStudent,
   listSubmissionsForMentor,
   resubmitSubmissionForStudent,
@@ -112,6 +113,29 @@ export async function listSubmissions(
     res.status(200).json({
       success: true,
       data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getSubmissionById(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const params = submissionIdParamSchema.safeParse(req.params);
+
+    if (!params.success) {
+      throw new AppError("Validation failed", 400, formatZodError(params.error));
+    }
+
+    const submission = await getSubmissionForMentor(params.data.id);
+
+    res.status(200).json({
+      success: true,
+      data: { submission },
     });
   } catch (error) {
     next(error);
