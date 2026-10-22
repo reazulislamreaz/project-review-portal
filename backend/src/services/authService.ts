@@ -4,7 +4,7 @@ import { hashPassword, verifyPassword } from "../lib/password";
 import { signAccessToken } from "../lib/jwt";
 import { normalizeEmail } from "../utils/email";
 import { AppError } from "../utils/errors";
-import type { LoginInput, SignupInput } from "../validators/auth";
+import type { LoginInput, SignupInput, UpdateProfileInput } from "../validators/auth";
 
 export type SafeUser = {
   id: string;
@@ -97,4 +97,23 @@ export async function getAuthenticatedUser(userId: string): Promise<SafeUser> {
   }
 
   return toSafeUser(user);
+}
+
+/** Updates the caller's own profile. Email is intentionally not accepted. */
+export async function updateAuthenticatedUserProfile(
+  userId: string,
+  input: UpdateProfileInput,
+): Promise<SafeUser> {
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { name: input.name.trim() },
+    });
+    return toSafeUser(user);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      throw new AppError("User not found", 404);
+    }
+    throw error;
+  }
 }

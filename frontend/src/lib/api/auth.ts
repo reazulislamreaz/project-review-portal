@@ -33,3 +33,19 @@ export async function getCurrentUser(token: string): Promise<SafeUser> {
   });
   return data.user;
 }
+
+export type UpdateProfilePayload = {
+  name: string;
+};
+
+export async function updateCurrentUserProfile(
+  payload: UpdateProfilePayload,
+  token: string,
+): Promise<SafeUser> {
+  const data = await apiRequest<{ user: SafeUser }>("/api/auth/me", {
+    method: "PATCH",
+    body: payload,
+    token,
+  });
+  return data.user;
+}

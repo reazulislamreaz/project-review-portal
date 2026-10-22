@@ -151,8 +151,9 @@ cp .env.test.example .env.test
 | `/signup` | Public | Student registration |
 | `/login` | Public | Student or mentor login |
 | `/student` | STUDENT | Student dashboard (submit + status + timeline) |
-| `/student/profile` | STUDENT | Student profile (name, email, role, member since) |
+| `/student/profile` | STUDENT | View/update own profile (email read-only) |
 | `/mentor` | MENTOR | Review dashboard (incl. Needs review queue) |
+| `/mentor/profile` | MENTOR | View/update own profile (email read-only) |
 
 ## API overview
 
@@ -164,6 +165,7 @@ Base URL: `http://localhost:4000` (or `NEXT_PUBLIC_API_URL`).
 | `POST` | `/api/auth/signup` | No | Student signup |
 | `POST` | `/api/auth/login` | No | Returns `{ user, token }` |
 | `GET` | `/api/auth/me` | Bearer | Current user profile |
+| `PATCH` | `/api/auth/me` | Bearer | Update own profile (`name` only; email cannot be changed) |
 | `POST` | `/api/submissions` | Student | Create submission |
 | `GET` | `/api/submissions/me` | Student | Own submission (incl. `feedback`, `reviewedAt`), or `{ submission: null }` |
 | `GET` | `/api/submissions` | Mentor | List + `page`, `limit`, optional `status`, `q`, `sortBy=createdAt`, `sortOrder=asc\|desc` |

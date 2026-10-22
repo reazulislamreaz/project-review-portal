@@ -185,6 +185,64 @@ describe("B3 authentication", () => {
     expect(response.body.data.user).not.toHaveProperty("passwordHash");
   });
 
+  it("lets authenticated users update their own name but not email", async () => {
+    const signup = await request(app).post("/api/auth/signup").send(student);
+    const token = signup.body.data.token as string;
+
+    const updated = await request(app)
+      .patch("/api/auth/me")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "Ada Updated" });
+
+    expect(updated.status).toBe(200);
+    expect(updated.body.data.user).toMatchObject({
+      id: signup.body.data.user.id,
+      name: "Ada Updated",
+      email: "ada@example.com",
+      role: "STUDENT",
+    });
+
+    const stored = await prisma.user.findUnique({ where: { email: "ada@example.com" } });
+    expect(stored?.name).toBe("Ada Updated");
+    expect(stored?.email).toBe("ada@example.com");
+
+    const rejectEmail = await request(app)
+      .patch("/api/auth/me")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "Ada Again", email: "other@example.com" });
+
+    expect(rejectEmail.status).toBe(400);
+
+    const unauth = await request(app).patch("/api/auth/me").send({ name: "Nope" });
+    expect(unauth.status).toBe(401);
+  });
+
+  it("lets mentors update their own profile name", async () => {
+    await seedMentorAccount(prisma, {
+      name: "Mentor Admin",
+      email: "mentor@example.com",
+      password: "MentorPass123!",
+    });
+
+    const mentorLogin = await request(app).post("/api/auth/login").send({
+      email: "mentor@example.com",
+      password: "MentorPass123!",
+    });
+    const token = mentorLogin.body.data.token as string;
+
+    const updated = await request(app)
+      .patch("/api/auth/me")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "Lead Mentor" });
+
+    expect(updated.status).toBe(200);
+    expect(updated.body.data.user).toMatchObject({
+      name: "Lead Mentor",
+      email: "mentor@example.com",
+      role: "MENTOR",
+    });
+  });
+
   it("blocks students from mentor-only routes and allows mentors", async () => {
     const studentSignup = await request(app).post("/api/auth/signup").send(student);
     const studentToken = studentSignup.body.data.token as string;

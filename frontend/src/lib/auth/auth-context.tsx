@@ -9,7 +9,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getCurrentUser, loginUser, signupStudent } from "@/lib/api/auth";
+import {
+  getCurrentUser,
+  loginUser,
+  signupStudent,
+  updateCurrentUserProfile,
+} from "@/lib/api/auth";
 import { ApiError, type AuthResult, type SafeUser } from "@/lib/api/types";
 import { clearStoredToken, getStoredToken, storeToken } from "@/lib/auth/token";
 
@@ -21,6 +26,7 @@ type AuthContextValue = {
   token: string | null;
   login: (email: string, password: string) => Promise<SafeUser>;
   signup: (name: string, email: string, password: string) => Promise<SafeUser>;
+  updateProfile: (name: string) => Promise<SafeUser>;
   logout: () => void;
   refreshUser: () => Promise<SafeUser | null>;
 };
@@ -129,6 +135,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [clearAuth, token]);
 
+  const updateProfile = useCallback(
+    async (name: string) => {
+      const currentToken = token ?? getStoredToken();
+      if (!currentToken) {
+        clearAuth();
+        throw new ApiError("Authentication required", 401);
+      }
+
+      try {
+        const profile = await updateCurrentUserProfile({ name }, currentToken);
+        setUser(profile);
+        setStatus("authenticated");
+        return profile;
+      } catch (error) {
+        if (error instanceof ApiError && (error.status === 401 || error.status === 404)) {
+          clearAuth();
+        }
+        throw error;
+      }
+    },
+    [clearAuth, token],
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       status,
@@ -136,10 +165,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token,
       login,
       signup,
+      updateProfile,
       logout: clearAuth,
       refreshUser,
     }),
-    [status, user, token, login, signup, clearAuth, refreshUser],
+    [status, user, token, login, signup, updateProfile, clearAuth, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

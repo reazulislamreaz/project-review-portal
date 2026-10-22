@@ -32,5 +32,14 @@ export const loginFormSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+export const updateProfileFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Name is required")
+    .max(MAX_NAME_LENGTH, `Name must be at most ${MAX_NAME_LENGTH} characters`),
+});
+
 export type SignupFormValues = z.infer<typeof signupFormSchema>;
 export type LoginFormValues = z.infer<typeof loginFormSchema>;
+export type UpdateProfileFormValues = z.infer<typeof updateProfileFormSchema>;
